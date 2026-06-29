@@ -36,10 +36,13 @@ public class EmailServiceImpl implements EmailService {
         String text = "Hello,\n\n" +
                       inviterName + " has invited you to join their team '" + teamName + "' on the Task Management System.\n\n" +
                       "Click the link below to accept the invitation:\n" +
-                      "http://localhost:5173/invite/" + token + "\n\n" + // Frontend URL
+                      frontendUrl + "/invite/" + token + "\n\n" +
                       "Thanks,\nTask Management System";
         sendEmail(email, subject, text);
     }
+
+    @Value("${frontend.url:http://localhost:5173}")
+    private String frontendUrl;
 
     private void sendEmail(String to, String subject, String text) {
         try {
@@ -52,7 +55,7 @@ public class EmailServiceImpl implements EmailService {
             log.info("Email sent successfully to {}", to);
         } catch (Exception e) {
             log.error("Failed to send email to {}", to, e);
+            throw new RuntimeException("Failed to send email: " + e.getMessage(), e);
         }
-
     }
 }
