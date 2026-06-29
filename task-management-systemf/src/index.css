@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Light theme colors (slate/blue based) */
+  --color-void: 248 250 252;
+  --color-base: 255 255 255;
+  --color-surface: 241 245 249;
+  --color-elevated: 226 232 240;
+  --color-hover: 203 213 225;
+  --color-active: 148 163 184;
+  --color-dim: 226 232 240;
+  --color-subtle: 203 213 225;
+  --color-moderate: 148 163 184;
+  --color-focus: 100 116 139;
+  --color-primary: 15 23 42;
+  --color-secondary: 71 85 105;
+  --color-muted: 100 116 139;
+  --color-ghost: 226 232 240;
+  --color-accent-blue: 59 130 246;
+  --color-accent-violet: 124 92 247;
+  --color-accent-emerald: 34 201 138;
+  --color-accent-amber: 245 166 35;
+  --color-accent-red: 239 68 68;
+  --color-accent-steel: 100 116 139;
+}
+
+.dark {
+  /* Dark theme colors */
+  --color-void: 8 10 15;
+  --color-base: 15 17 23;
+  --color-surface: 23 27 38;
+  --color-elevated: 30 35 51;
+  --color-hover: 37 43 59;
+  --color-active: 45 52 72;
+  --color-dim: 30 35 51;
+  --color-subtle: 42 48 69;
+  --color-moderate: 61 70 99;
+  --color-focus: 76 86 128;
+  --color-primary: 232 234 240;
+  --color-secondary: 136 146 164;
+  --color-muted: 78 86 104;
+  --color-ghost: 42 48 69;
+  --color-accent-blue: 79 142 247;
+  --color-accent-violet: 124 92 247;
+  --color-accent-emerald: 34 201 138;
+  --color-accent-amber: 245 166 35;
+  --color-accent-red: 240 101 101;
+  --color-accent-steel: 92 112 153;
+}
+
+@layer base {
+  * {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: 'Bricolage Grotesque', sans-serif;
+  }
+  
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  body {
+    @apply bg-void text-primary font-sans antialiased transition-colors duration-200;
+    /* We don't hide overflow globally to allow scrolling on long pages like landing */
+  }
+}
+
+@layer utilities {
+  .focus-pulse {
+    animation: focusPulse 1.2s ease-out forwards;
+  }
+  
+  .shimmer {
+    background: linear-gradient(
+      to right,
+      rgba(255,255,255,0.03) 0%,
+      rgba(255,255,255,0.07) 50%,
+      rgba(255,255,255,0.03) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+}
+
+@keyframes focusPulse {
+  0% { box-shadow: 0 0 0 0 rgba(79, 142, 247, 0.4); }
+  100% { box-shadow: 0 0 0 16px rgba(79, 142, 247, 0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-moderate rounded-full hover:bg-muted transition-colors;
+}

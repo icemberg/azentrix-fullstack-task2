@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- Background -->
+    <rect id="bg" width="512" height="512" fill="#080A0F" />
+    
+    <!-- Card Fill Gradient -->
+    <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F8EF7" />
+      <stop offset="100%" stop-color="#7C5CFC" />
+    </linearGradient>
+
+    <!-- Radial Glow -->
+    <radialGradient id="focusPulse" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(79, 142, 247, 0.18)" />
+      <stop offset="100%" stop-color="rgba(79, 142, 247, 0)" />
+    </radialGradient>
+  </defs>
+
+  <!-- 1. Background -->
+  <use href="#bg" />
+
+  <!-- 2. Focus Pulse Glow -->
+  <!-- Centered on the card's original center (256, 256), 60% of canvas width = 307px diameter -> r=154px -->
+  <circle cx="256" cy="256" r="180" fill="url(#focusPulse)" />
+
+  <g transform="rotate(8, 256, 256)">
+    <!-- 3. Ghost Card -->
+    <!-- Offset 2 units left, 2 units down (at 16-unit scale) -> 512/16*2 = 64px -->
+    <!-- Center card is at x=96, y=48. Ghost is at x=32, y=112 -->
+    <!-- Stroke is 1.5px at 32x32 -> 24px at 512x512 -->
+    <rect x="32" y="112" width="320" height="416" rx="80" 
+          fill="none" stroke="#7C5CFC" stroke-width="24" stroke-opacity="0.35" />
+
+    <!-- 4. Solid Card -->
+    <rect x="96" y="48" width="320" height="416" rx="80" fill="url(#cardGradient)" />
+
+    <!-- 5. Card Content Lines -->
+    <!-- Title Line: 70% width = 224px, 2px tall at 32x32 -> 32px tall at 512x512 -->
+    <rect x="144" y="128" width="224" height="32" rx="16" fill="#FFFFFF" fill-opacity="0.6" />
+    
+    <!-- Meta Line: 45% width = 144px, 1.5px tall -> 24px tall -->
+    <rect x="144" y="192" width="144" height="24" rx="12" fill="#FFFFFF" fill-opacity="0.3" />
+
+    <!-- 6. Done Dot -->
+    <rect x="336" y="384" width="32" height="32" rx="16" fill="#22C98A" />
+  </g>
+</svg>
