@@ -15,7 +15,7 @@ export const useWebSocket = (boardId, teamId) => {
     if (!token || (!boardId && !teamId)) return;
 
     client.current = new Client({
-      webSocketFactory: () => new SockJS(import.meta.env.PROD ? '/ws' : 'http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS(import.meta.env.VITE_WS_URL || (import.meta.env.PROD ? '/ws' : 'http://localhost:8080/ws')),
       // STOMP headers can't always pass auth easily with SockJS in some setups,
       // but we try passing it in connectHeaders. If backend doesn't read it,
       // you might need to send it as a connect frame header or token query param.
