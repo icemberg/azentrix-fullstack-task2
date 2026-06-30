@@ -33,9 +33,7 @@ const Sidebar = () => {
       className="fixed left-0 top-0 h-dvh bg-surface border-r border-dim z-40 overflow-hidden flex flex-col"
     >
       <div className="h-16 px-4 flex items-center border-b border-dim shrink-0">
-        <div className="w-7 h-7 rounded-[7px] bg-gradient-to-br from-accent-blue to-accent-violet flex items-center justify-center shrink-0">
-          <span className="font-display font-bold text-[15px] text-white">T</span>
-        </div>
+        <img src="/favicon.svg" alt="TaskFlow" className="w-7 h-7 rounded-[7px] shrink-0 object-contain" />
         <motion.span
           animate={{ opacity: isCollapsed ? 0 : 1 }}
           transition={{ duration: 0.1 }}

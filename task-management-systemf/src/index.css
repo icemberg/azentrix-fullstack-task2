@@ -121,3 +121,80 @@
 ::-webkit-scrollbar-thumb {
   @apply bg-moderate rounded-full hover:bg-muted transition-colors;
 }
+
+/* Landing Page Animations & Hover States */
+.cta-primary {
+  transition: background-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+.cta-primary:hover {
+  background-color: #6BA3F9;
+  box-shadow: 0 6px 24px rgba(79, 142, 247, 0.4);
+  transform: translateY(-2px);
+}
+.cta-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(79, 142, 247, 0.3);
+  transition-duration: 80ms;
+}
+.cta-primary .arrow-icon {
+  transition: transform 200ms ease;
+}
+.cta-primary:hover .arrow-icon {
+  transform: translateX(4px);
+}
+
+.cta-secondary {
+  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
+}
+.cta-secondary:hover {
+  border-color: #3D4663;
+  background-color: rgba(255,255,255,0.03);
+}
+.dark .cta-secondary:hover {
+  background-color: rgba(255,255,255,0.03);
+}
+
+.feature-card {
+  transition: background-color 200ms ease, border-color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+}
+.feature-card:hover {
+  background-color: var(--color-elevated);
+  border-color: #3D4663;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.dark .feature-card:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.feature-card .icon-zone {
+  transition: transform 200ms ease;
+}
+.feature-card:hover .icon-zone {
+  transform: scale(1.1);
+}
+
+.live-dot {
+  animation: liveDotPulse 1.8s ease-in-out infinite;
+}
+@keyframes liveDotPulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.mock-card-glow {
+  animation: cardGlow 4s ease-in-out infinite;
+}
+@keyframes cardGlow {
+  0% { opacity: 0.6; box-shadow: none; }
+  10% { opacity: 1; box-shadow: -2px 0 12px rgba(79, 142, 247, 0.6); }
+  20% { opacity: 0.6; box-shadow: none; }
+  100% { opacity: 0.6; box-shadow: none; }
+}
+.mock-card-glow-delay {
+  animation-delay: 2s;
+}
+
+#features {
+  scroll-margin-top: 80px;
+}

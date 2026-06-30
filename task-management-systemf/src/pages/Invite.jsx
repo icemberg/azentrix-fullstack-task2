@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { teamApi } from '../api/teams.api';
 import { useAuthStore } from '../store/auth.store';
 import { useToastStore } from '../store/toast.store';
+import useTeamStore from '../store/team.store';
 import { Loader2, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -12,6 +13,8 @@ const Invite = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
   const addToast = useToastStore(state => state.addToast);
+  const { fetchTeams, setActiveTeam } = useTeamStore();
+  const queryClient = useQueryClient();
 
   const { data: invite, isLoading, isError, error } = useQuery({
     queryKey: ['invite', token],
@@ -21,7 +24,10 @@ const Invite = () => {
 
   const acceptMutation = useMutation({
     mutationFn: () => teamApi.acceptInvitation(token),
-    onSuccess: (team) => {
+    onSuccess: async (team) => {
+      await fetchTeams();
+      setActiveTeam(team.teamId);
+      queryClient.invalidateQueries(['teams']);
       addToast({ type: 'success', message: `Joined ${team.name} successfully!` });
       navigate('/dashboard');
     },
@@ -46,9 +52,7 @@ const Invite = () => {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md bg-surface border border-dim rounded-2xl shadow-2xl p-8 text-center"
       >
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-blue to-accent-violet flex items-center justify-center mx-auto mb-6">
-          <span className="font-display font-bold text-[24px] text-white">T</span>
-        </div>
+        <img src="/favicon.svg" alt="TaskFlow" className="w-12 h-12 rounded-[12px] shadow-glow-blue object-contain bg-white p-1 mb-6" />
         
         {isLoading ? (
           <div className="flex flex-col items-center gap-4 text-secondary">
@@ -76,12 +80,14 @@ const Invite = () => {
                 </div>
                 <Link 
                   to="/register" 
+                  state={{ from: { pathname: `/invite/${token}` } }}
                   className="w-full h-11 bg-primary text-base flex items-center justify-center rounded-lg font-medium transition-transform hover:scale-[1.02]"
                 >
                   Create an account
                 </Link>
                 <Link 
                   to="/login" 
+                  state={{ from: { pathname: `/invite/${token}` } }}
                   className="w-full h-11 border border-dim text-primary flex items-center justify-center rounded-lg font-medium transition-colors hover:bg-hover"
                 >
                   Log in

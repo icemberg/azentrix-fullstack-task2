@@ -131,7 +131,7 @@ const Dashboard = () => {
                           <Clock size={13} />
                           <span className="font-mono text-[11px]">
                             {board.updatedAt 
-                              ? `Updated ${formatDistanceToNow(new Date(board.updatedAt), { addSuffix: true })}`
+                              ? `Updated ${formatDistanceToNow(new Date(board.updatedAt.endsWith('Z') ? board.updatedAt : board.updatedAt + 'Z'), { addSuffix: true })}`
                               : 'Updated just now'}
                           </span>
                         </div>

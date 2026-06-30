@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import ThemeToggle from '../components/ui/ThemeToggle';
 import { ArrowRight, Mail, Lock, User, Loader2 } from 'lucide-react';
 import { register as registerApi } from '../api/auth.api';
 import { useToastStore } from '../store/toast.store';
@@ -10,6 +11,7 @@ import { useAuthStore } from '../store/auth.store';
 const Register = () => {
   const [formData, setFormData] = useState({ username: '', email: '', role: 'USER', password: '' });
   const navigate = useNavigate();
+  const location = useLocation();
   const addToast = useToastStore((state) => state.addToast);
 
   const mutation = useMutation({
@@ -18,12 +20,13 @@ const Register = () => {
       // Auto-login or redirect to login. Let's redirect to login for now if no token returned, 
       // or if token returned, set it. The current API returns just a message usually, but let's check.
       addToast({ type: 'success', message: 'Account created successfully!' });
-      navigate('/login');
+      const from = location.state?.from?.pathname;
+      navigate('/login', from ? { state: { from: { pathname: from } } } : {});
     },
     onError: (error) => {
-      addToast({ 
-        type: 'error', 
-        message: error.response?.data?.message || 'Registration failed' 
+      addToast({
+        type: 'error',
+        message: error.response?.data?.message || 'Registration failed'
       });
     }
   });
@@ -36,20 +39,23 @@ const Register = () => {
   const staggerVariants = {
     hidden: { opacity: 0, y: 10 },
     visible: (custom) => ({
-      opacity: 1, 
-      y: 0, 
+      opacity: 1,
+      y: 0,
       transition: { delay: custom * 0.1, duration: 0.4, ease: 'easeOut' }
     })
   };
 
   return (
-    <div className="flex min-h-screen bg-base">
+    <div className="min-h-screen bg-void flex relative">
+      {/* Top right absolute controls */}
+      <div className="absolute top-8 right-8 z-20">
+        <ThemeToggle />
+      </div>
+
       {/* Left Branded Panel (40%) */}
       <div className="hidden lg:flex w-[40%] bg-surface flex-col justify-between p-12 border-r border-dim">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-blue to-accent-violet flex items-center justify-center shadow-glow-blue">
-            <span className="font-display font-bold text-xl text-white">T</span>
-          </div>
+          <img src="/favicon.svg" alt="TaskFlow" className="w-10 h-10 rounded-xl shadow-glow-blue object-contain bg-white p-1" />
           <span className="font-display font-semibold text-2xl text-primary tracking-tight">TaskFlow</span>
         </div>
 
@@ -78,7 +84,7 @@ const Register = () => {
 
         <div className="flex items-center gap-4 text-secondary">
           <div className="flex -space-x-3">
-            {[1,2,3].map((i) => (
+            {[1, 2, 3].map((i) => (
               <div key={i} className="w-8 h-8 rounded-full bg-elevated border-2 border-surface flex items-center justify-center">
                 <User size={14} className="text-muted" />
               </div>
@@ -92,9 +98,7 @@ const Register = () => {
       <div className="flex-1 flex flex-col justify-center px-6 lg:px-24">
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center gap-2 mb-12">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-blue to-accent-violet flex items-center justify-center">
-            <span className="font-display font-bold text-base text-white">T</span>
-          </div>
+          <img src="/favicon.svg" alt="TaskFlow" className="w-8 h-8 rounded-lg object-contain bg-white p-1" />
           <span className="font-display font-semibold text-xl text-primary">TaskFlow</span>
         </div>
 
@@ -149,7 +153,7 @@ const Register = () => {
                 </select>
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                   <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M1 1L5 5L9 1" stroke="#8892A4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M1 1L5 5L9 1" stroke="#8892A4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
               </div>

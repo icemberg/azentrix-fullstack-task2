@@ -7,6 +7,20 @@ const Topbar = ({ leftContent }) => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const logout = useAuthStore((state) => state.logout);
+  const searchInputRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Check for Cmd+K (Mac) or Ctrl+K (Windows/Linux)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault(); // Prevent browser default search
+        searchInputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <header className="h-14 bg-base border-b border-dim px-6 flex items-center justify-between shrink-0">
@@ -18,6 +32,7 @@ const Topbar = ({ leftContent }) => {
         <div className="relative flex items-center">
           <Search size={14} className="absolute left-2.5 text-muted pointer-events-none" />
           <motion.input
+            ref={searchInputRef}
             type="text"
             placeholder="Search boards, cards..."
             className="h-8 bg-elevated border border-subtle rounded-md pl-8 pr-8 font-sans text-[13px] text-primary placeholder:text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-colors duration-150"

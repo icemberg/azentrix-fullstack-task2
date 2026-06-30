@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import ThemeToggle from '../components/ui/ThemeToggle';
 import { ArrowRight, User, Lock, Loader2, LayoutGrid } from 'lucide-react';
 import { login as loginApi } from '../api/auth.api';
 import { useAuthStore } from '../store/auth.store';
@@ -46,13 +47,16 @@ const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-base">
+    <div className="flex min-h-screen bg-base relative">
+      {/* Top right absolute controls */}
+      <div className="absolute top-8 right-8 z-20">
+        <ThemeToggle />
+      </div>
+
       {/* Left Branded Panel (40%) */}
       <div className="hidden lg:flex w-[40%] bg-surface flex-col justify-between p-12 border-r border-dim">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-blue to-accent-violet flex items-center justify-center shadow-glow-blue">
-            <span className="font-display font-bold text-xl text-white">T</span>
-          </div>
+          <img src="/favicon.svg" alt="TaskFlow" className="w-10 h-10 rounded-xl shadow-glow-blue object-contain bg-white p-1" />
           <span className="font-display font-semibold text-2xl text-primary tracking-tight">TaskFlow</span>
         </div>
 
@@ -94,9 +98,7 @@ const Login = () => {
       <div className="flex-1 flex flex-col justify-center px-6 lg:px-24">
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center gap-2 mb-12">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-blue to-accent-violet flex items-center justify-center">
-            <span className="font-display font-bold text-base text-white">T</span>
-          </div>
+          <img src="/favicon.svg" alt="TaskFlow" className="w-8 h-8 rounded-lg object-contain bg-white p-1" />
           <span className="font-display font-semibold text-xl text-primary">TaskFlow</span>
         </div>
 

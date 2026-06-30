@@ -65,7 +65,7 @@ public class EntityMapper {
                 .boardId(board.getBoardId())
                 .boardname(board.getBoardname())
                 .description(board.getDescription())
-                .updatedAt(board.getUpdatedAt())
+                .updatedAt(board.getUpdatedAt() != null ? board.getUpdatedAt() : board.getCreatedAt())
                 .cards(cardResponses)
                 .build();
     }
