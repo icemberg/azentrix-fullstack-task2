@@ -17,7 +17,7 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.username:noreply@azentrix.com}")
+    @Value("${app.mail.from:taskflow.engine@gmail.com}")
     private String fromEmail;
 
     public void sendAssignmentEmail(User user, Card card) {
