@@ -2,6 +2,8 @@ package com.azentrix.task_management_system.service.impl;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.azentrix.task_management_system.dto.WebSocketEvent;
 import com.azentrix.task_management_system.entity.Board;
@@ -21,14 +23,14 @@ public class BoardBroadcastServiceImpl implements BoardBroadcastService {
     @Override
     public void broadcastCardCreated(Long boardId, Card card) {
         log.debug("Broadcasting CARD_CREATED event for card ID: {} on board ID: {}", card.getId(), boardId);
-        sendEvent(boardId, new WebSocketEvent("CARD_CREATED", card));
+        sendEvent(boardId, new WebSocketEvent("CARD_CREATED", card.getId()));
         log.info("Broadcasted CARD_CREATED for board ID: {}", boardId);
     }
 
     @Override
     public void broadcastCardUpdated(Long boardId, Card card) {
         log.debug("Broadcasting CARD_UPDATED event for card ID: {} on board ID: {}", card.getId(), boardId);
-        sendEvent(boardId, new WebSocketEvent("CARD_UPDATED", card));
+        sendEvent(boardId, new WebSocketEvent("CARD_UPDATED", card.getId()));
         log.info("Broadcasted CARD_UPDATED for board ID: {}", boardId);
     }
 
@@ -42,22 +44,22 @@ public class BoardBroadcastServiceImpl implements BoardBroadcastService {
     @Override
     public void broadcastCardMoved(Long boardId, Card card) {
         log.debug("Broadcasting CARD_MOVED event for card ID: {} on board ID: {}", card.getId(), boardId);
-        sendEvent(boardId, new WebSocketEvent("CARD_MOVED", card));
+        sendEvent(boardId, new WebSocketEvent("CARD_MOVED", card.getId()));
         log.info("Broadcasted CARD_MOVED for board ID: {}", boardId);
     }
 
     @Override
     public void broadcastBoardCreated(Board board) {
         log.debug("Broadcasting BOARD_CREATED event for board ID: {}", board.getBoardId());
-        sendTeamEvent(board.getTeam().getTeamId(), new WebSocketEvent("BOARD_CREATED", board));
+        sendTeamEvent(board.getTeam().getTeamId(), new WebSocketEvent("BOARD_CREATED", board.getBoardId()));
         log.info("Broadcasted BOARD_CREATED for board ID: {}", board.getBoardId());
     }
 
     @Override
     public void broadcastBoardUpdated(Board board) {
         log.debug("Broadcasting BOARD_UPDATED event for board ID: {}", board.getBoardId());
-        sendEvent(board.getBoardId(), new WebSocketEvent("BOARD_UPDATED", board));
-        sendTeamEvent(board.getTeam().getTeamId(), new WebSocketEvent("BOARD_UPDATED", board));
+        sendEvent(board.getBoardId(), new WebSocketEvent("BOARD_UPDATED", board.getBoardId()));
+        sendTeamEvent(board.getTeam().getTeamId(), new WebSocketEvent("BOARD_UPDATED", board.getBoardId()));
         log.info("Broadcasted BOARD_UPDATED for board ID: {}", board.getBoardId());
     }
     
@@ -70,11 +72,33 @@ public class BoardBroadcastServiceImpl implements BoardBroadcastService {
 
     private void sendEvent(Long boardId, WebSocketEvent event) {
         log.debug("Sending STOMP message to /topic/board/{} with event type: {}", boardId, event.getType());
-        messagingTemplate.convertAndSend("/topic/board/" + boardId, event);
+        Runnable sendTask = () -> messagingTemplate.convertAndSend("/topic/board/" + boardId, event);
+        
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sendTask.run();
+                }
+            });
+        } else {
+            sendTask.run();
+        }
     }
     
     private void sendTeamEvent(Long teamId, WebSocketEvent event) {
         log.debug("Sending STOMP message to /topic/team/{} with event type: {}", teamId, event.getType());
-        messagingTemplate.convertAndSend("/topic/team/" + teamId, event);
+        Runnable sendTask = () -> messagingTemplate.convertAndSend("/topic/team/" + teamId, event);
+        
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sendTask.run();
+                }
+            });
+        } else {
+            sendTask.run();
+        }
     }
 }
