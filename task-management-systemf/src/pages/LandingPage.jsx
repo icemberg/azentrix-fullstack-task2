@@ -25,6 +25,151 @@ const staggerContainer = {
 const words1 = "The standard for".split(" ");
 const words2 = "engineering teams.".split(" ");
 
+const HowItWorksAnimation = () => {
+  const [activeStep, setActiveStep] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveStep((prev) => (prev + 1) % 3);
+    }, 4000); 
+    return () => clearInterval(interval);
+  }, []);
+
+  const steps = [
+    { title: 'Create a Workspace', desc: 'Set up your personal or team environment in seconds.' },
+    { title: 'Build your Board', desc: 'Define your columns, statuses, and workflow rules.' },
+    { title: 'Execute', desc: 'Drag, drop, and conquer your tasks with the team.' }
+  ];
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center w-full mt-12 text-left">
+      {/* Left side: Steps */}
+      <div className="flex flex-col gap-4">
+        {steps.map((step, i) => (
+          <div 
+            key={i} 
+            onClick={() => setActiveStep(i)}
+            className={`cursor-pointer p-6 rounded-xl border transition-all duration-300 ${activeStep === i ? 'bg-accent-blue/5 border-accent-blue/30' : 'bg-transparent border-transparent hover:bg-elevated/50'}`}
+          >
+            <div className="flex items-center gap-4 mb-2">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-mono text-[13px] font-bold transition-colors ${activeStep === i ? 'bg-accent-blue text-white' : 'bg-elevated border border-dim text-muted'}`}>
+                {i + 1}
+              </div>
+              <h4 className={`font-display font-bold text-lg ${activeStep === i ? 'text-primary' : 'text-secondary'}`}>{step.title}</h4>
+            </div>
+            <p className={`font-sans text-sm pl-12 ${activeStep === i ? 'text-secondary' : 'text-muted'}`}>{step.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Right side: Mock UI Animation */}
+      <div className="relative w-full aspect-video bg-surface border border-dim rounded-xl overflow-hidden shadow-2xl flex items-center justify-center p-6">
+        <AnimatePresence mode="wait">
+          {activeStep === 0 && (
+            <motion.div 
+              key="step0"
+              initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.95 }}
+              animate={prefersReducedMotion ? false : { opacity: 1, scale: 1 }}
+              exit={prefersReducedMotion ? false : { opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.4 }}
+              className="w-72 bg-base border border-dim rounded-lg shadow-xl flex flex-col overflow-hidden"
+            >
+              <div className="h-10 border-b border-dim flex items-center px-4 font-sans font-medium text-[13px] text-primary">
+                Create Workspace
+              </div>
+              <div className="p-5 flex flex-col gap-4">
+                <div>
+                  <div className="w-16 h-2 bg-elevated rounded-full mb-2"></div>
+                  <motion.div 
+                    initial={prefersReducedMotion ? false : { width: 0 }}
+                    animate={prefersReducedMotion ? false : { width: "100%" }}
+                    transition={{ duration: 1.5, ease: "easeOut", delay: 0.3 }}
+                    className="h-8 bg-elevated border border-subtle rounded flex items-center px-2 overflow-hidden whitespace-nowrap"
+                  >
+                    <span className="font-mono text-xs text-primary">Engineering Team|</span>
+                  </motion.div>
+                </div>
+                <motion.div 
+                  initial={prefersReducedMotion ? false : { backgroundColor: "rgba(59, 130, 246, 0.5)" }}
+                  animate={prefersReducedMotion ? false : { backgroundColor: "rgba(59, 130, 246, 1)" }}
+                  transition={{ delay: 2.0, duration: 0.2 }}
+                  className="h-8 rounded bg-accent-blue text-white font-sans text-xs flex items-center justify-center mt-2"
+                >
+                  Create
+                </motion.div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeStep === 1 && (
+            <motion.div 
+              key="step1"
+              initial={prefersReducedMotion ? false : { opacity: 0 }}
+              animate={prefersReducedMotion ? false : { opacity: 1 }}
+              exit={prefersReducedMotion ? false : { opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              className="w-full h-full flex items-start gap-4 p-4"
+            >
+              {['To Do', 'In Progress', 'Done'].map((col, idx) => (
+                <motion.div 
+                  key={col}
+                  initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+                  animate={prefersReducedMotion ? false : { opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.3 + 0.1, duration: 0.4 }}
+                  className="flex-1 bg-void/50 border border-dim rounded-lg h-full flex flex-col p-3"
+                >
+                  <div className="font-sans font-medium text-[12px] text-primary mb-3">{col}</div>
+                  <motion.div initial={prefersReducedMotion ? false : { opacity: 0 }} animate={prefersReducedMotion ? false : { opacity: 1 }} transition={{ delay: 1.2 + idx * 0.2 }} className="w-full h-16 bg-base border border-dim rounded-md mb-2"></motion.div>
+                  {idx === 0 && <motion.div initial={prefersReducedMotion ? false : { opacity: 0 }} animate={prefersReducedMotion ? false : { opacity: 1 }} transition={{ delay: 1.8 }} className="w-full h-16 bg-base border border-dim rounded-md"></motion.div>}
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+
+          {activeStep === 2 && (
+            <motion.div 
+              key="step2"
+              initial={prefersReducedMotion ? false : { opacity: 0 }}
+              animate={prefersReducedMotion ? false : { opacity: 1 }}
+              exit={prefersReducedMotion ? false : { opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              className="w-full h-full flex items-start gap-4 p-4 relative"
+            >
+              <div className="flex-1 bg-void/50 border border-dim rounded-lg h-full flex flex-col p-3">
+                <div className="font-sans font-medium text-[12px] text-primary mb-3">To Do</div>
+                <div className="w-full h-16 bg-base border border-dim rounded-md mb-2 opacity-50"></div>
+              </div>
+              <div className="flex-1 bg-void/50 border border-dim rounded-lg h-full flex flex-col p-3">
+                <div className="font-sans font-medium text-[12px] text-primary mb-3">In Progress</div>
+              </div>
+              <div className="flex-1 bg-void/50 border border-dim rounded-lg h-full flex flex-col p-3">
+                <div className="font-sans font-medium text-[12px] text-primary mb-3">Done</div>
+              </div>
+              
+              {/* Moving Card */}
+              <motion.div 
+                initial={prefersReducedMotion ? false : { left: '1.25rem', top: '3.75rem' }}
+                animate={prefersReducedMotion ? false : { left: 'calc(33.33% + 0.75rem)', top: '3.75rem' }}
+                transition={{ duration: 0.8, delay: 0.5, ease: "easeInOut" }}
+                className="absolute w-[calc(33.33%-2rem)] h-16 bg-base border border-accent-blue rounded-md shadow-lg flex flex-col justify-center px-3 z-10 mock-card-glow"
+              >
+                <div className="w-3/4 h-2 bg-elevated rounded-full mb-2"></div>
+                <div className="w-1/2 h-2 bg-elevated rounded-full"></div>
+                <motion.div 
+                  initial={prefersReducedMotion ? false : { opacity: 0, scale: 0 }}
+                  animate={prefersReducedMotion ? false : { opacity: 1, scale: 1 }}
+                  transition={{ delay: 1.5, duration: 0.3 }}
+                  className="absolute bottom-2 right-2 w-4 h-4 rounded-full bg-accent-amber border border-base"
+                ></motion.div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
+
 const ProductPreviewMock = () => {
   const [movingCardCol, setMovingCardCol] = useState(0);
 
@@ -345,40 +490,7 @@ const LandingPage = () => {
             </motion.h2>
           </motion.div>
 
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative">
-            {/* Connecting Line (Background) */}
-            <div className="hidden md:block absolute top-12 left-[10%] right-[10%] h-[2px] bg-dim z-0"></div>
-            
-            {/* Connecting Line (Animated Fill) */}
-            <motion.div 
-              className="hidden md:block absolute top-12 left-[10%] h-[2px] bg-accent-blue z-0"
-              initial={prefersReducedMotion ? { width: '80%' } : { width: 0 }}
-              whileInView={{ width: '80%' }}
-              viewport={{ once: true, amount: 0.5 }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            />
-
-            {/* Stations */}
-            {[
-              { step: 1, title: 'Create a Workspace', desc: 'Set up your personal or team environment in seconds.' },
-              { step: 2, title: 'Build your Board', desc: 'Define your columns, statuses, and workflow rules.' },
-              { step: 3, title: 'Execute', desc: 'Drag, drop, and conquer your tasks with the team.' }
-            ].map((station, i) => (
-              <div key={i} className="flex flex-col items-center text-center relative z-10 w-64">
-                <motion.div 
-                  initial={prefersReducedMotion ? { backgroundColor: '#3B82F6' } : { backgroundColor: 'transparent' }}
-                  whileInView={{ backgroundColor: '#3B82F6' }}
-                  viewport={{ once: true, amount: 0.5 }}
-                  transition={{ duration: 0.3, delay: i * 0.2 }}
-                  className="w-8 h-8 rounded-full border-2 border-accent-blue flex items-center justify-center text-white font-mono text-[13px] font-bold mb-4 bg-surface transition-colors"
-                >
-                  {station.step}
-                </motion.div>
-                <h4 className="font-display font-bold text-lg text-primary mb-2">{station.title}</h4>
-                <p className="font-sans text-sm text-secondary">{station.desc}</p>
-              </div>
-            ))}
-          </div>
+          <HowItWorksAnimation />
         </div>
       </section>
 

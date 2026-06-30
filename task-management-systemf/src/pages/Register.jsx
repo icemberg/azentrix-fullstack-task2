@@ -7,6 +7,8 @@ import { register as registerApi } from '../api/auth.api';
 import { useToastStore } from '../store/toast.store';
 import { useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '../store/auth.store';
+import { GoogleLogin } from '@react-oauth/google';
+import api from '../api/axios';
 
 const Register = () => {
   const [formData, setFormData] = useState({ username: '', email: '', role: 'USER', password: '' });
@@ -35,6 +37,25 @@ const Register = () => {
     e.preventDefault();
     mutation.mutate(formData);
   };
+
+  const googleLoginMutation = useMutation({
+    mutationFn: async (credential) => {
+      const response = await api.post('/v1/auth/google', { idToken: credential });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      // For registration with Google, the backend currently handles it identically to login
+      // If the user doesn't exist, it creates them. 
+      // If we had a separate store logic, we'd use setAuth here. Let's just import and use setAuth.
+      useAuthStore.getState().setAuth(data.token, { username: data.username, email: data.email, role: data.role, avatar: data.avatar });
+      addToast({ type: 'success', message: 'Signed up with Google successfully!' });
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
+    },
+    onError: (error) => {
+      addToast({ type: 'error', message: error.response?.data?.message || 'Google signup failed' });
+    }
+  });
 
   const staggerVariants = {
     hidden: { opacity: 0, y: 10 },

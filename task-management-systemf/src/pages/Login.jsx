@@ -8,7 +8,7 @@ import { useAuthStore } from '../store/auth.store';
 import { useToastStore } from '../store/toast.store';
 import { useMutation } from '@tanstack/react-query';
 import { GoogleLogin } from '@react-oauth/google';
-import api from '../api/axios.config';
+import api from '../api/axios';
 
 const Login = () => {
   const [formData, setFormData] = useState({ username: '', password: '' });
