@@ -11,7 +11,8 @@ import { motion } from 'framer-motion';
 const Invite = () => {
   const { token } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
+  const tokenStore = useAuthStore((state) => state.token);
+  const isAuthenticated = !!tokenStore;
   const addToast = useToastStore(state => state.addToast);
   const { fetchTeams, setActiveTeam } = useTeamStore();
   const queryClient = useQueryClient();
