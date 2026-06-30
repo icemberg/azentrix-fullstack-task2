@@ -2,14 +2,20 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ThemeToggle from '../components/ui/ThemeToggle';
-import { ArrowRight, User, Lock, Loader2, LayoutGrid } from 'lucide-react';
+import { ArrowRight, User, Lock, Loader2, LayoutGrid, KeyRound } from 'lucide-react';
 import { login as loginApi } from '../api/auth.api';
 import { useAuthStore } from '../store/auth.store';
 import { useToastStore } from '../store/toast.store';
 import { useMutation } from '@tanstack/react-query';
+import { GoogleLogin } from '@react-oauth/google';
+import api from '../api/axios.config';
 
 const Login = () => {
   const [formData, setFormData] = useState({ username: '', password: '' });
+  const [requires2fa, setRequires2fa] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [pendingUsername, setPendingUsername] = useState('');
+  
   const navigate = useNavigate();
   const location = useLocation();
   const setAuth = useAuthStore((state) => state.setAuth);
@@ -17,12 +23,18 @@ const Login = () => {
 
   const from = location.state?.from?.pathname || '/dashboard';
 
-  const mutation = useMutation({
+  const loginMutation = useMutation({
     mutationFn: loginApi,
     onSuccess: (data) => {
-      setAuth(data.token, { username: data.username, email: data.email, role: data.role, avatar: data.avatar });
-      addToast({ type: 'success', message: 'Welcome back!' });
-      navigate(from, { replace: true });
+      if (data.requires2fa) {
+        setRequires2fa(true);
+        setPendingUsername(formData.username);
+        addToast({ type: 'info', message: '2FA verification required' });
+      } else {
+        setAuth(data.token, { username: data.username, email: data.email, role: data.role, avatar: data.avatar });
+        addToast({ type: 'success', message: 'Welcome back!' });
+        navigate(from, { replace: true });
+      }
     },
     onError: (error) => {
       addToast({ 
@@ -32,9 +44,43 @@ const Login = () => {
     }
   });
 
+  const verify2faMutation = useMutation({
+    mutationFn: async (data) => {
+      const response = await api.post('/v1/auth/verify-2fa', data);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      setAuth(data.token, { username: data.username, email: data.email, role: data.role, avatar: data.avatar });
+      addToast({ type: 'success', message: '2FA Verified! Welcome back.' });
+      navigate(from, { replace: true });
+    },
+    onError: (error) => {
+      addToast({ type: 'error', message: error.response?.data?.message || 'Invalid 2FA code' });
+    }
+  });
+
+  const googleLoginMutation = useMutation({
+    mutationFn: async (credential) => {
+      const response = await api.post('/v1/auth/google', { idToken: credential });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      setAuth(data.token, { username: data.username, email: data.email, role: data.role, avatar: data.avatar });
+      addToast({ type: 'success', message: 'Google login successful!' });
+      navigate(from, { replace: true });
+    },
+    onError: (error) => {
+      addToast({ type: 'error', message: error.response?.data?.message || 'Google login failed' });
+    }
+  });
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    mutation.mutate(formData);
+    if (requires2fa) {
+      verify2faMutation.mutate({ username: pendingUsername, code: twoFactorCode });
+    } else {
+      loginMutation.mutate(formData);
+    }
   };
 
   const staggerVariants = {
@@ -48,12 +94,10 @@ const Login = () => {
 
   return (
     <div className="flex min-h-screen bg-base relative">
-      {/* Top right absolute controls */}
       <div className="absolute top-8 right-8 z-20">
         <ThemeToggle />
       </div>
 
-      {/* Left Branded Panel (40%) */}
       <div className="hidden lg:flex w-[40%] bg-surface flex-col justify-between p-12 border-r border-dim">
         <div className="flex items-center gap-3">
           <img src="/favicon.svg" alt="TaskFlow" className="w-10 h-10 rounded-xl shadow-glow-blue object-contain bg-white p-1" />
@@ -94,9 +138,7 @@ const Login = () => {
         </div>
       </div>
 
-      {/* Right Form Panel (60%) */}
       <div className="flex-1 flex flex-col justify-center px-6 lg:px-24">
-        {/* Mobile Header */}
         <div className="lg:hidden flex items-center gap-2 mb-12">
           <img src="/favicon.svg" alt="TaskFlow" className="w-8 h-8 rounded-lg object-contain bg-white p-1" />
           <span className="font-display font-semibold text-xl text-primary">TaskFlow</span>
@@ -104,54 +146,100 @@ const Login = () => {
 
         <div className="w-full max-w-md mx-auto">
           <motion.div custom={0} initial="hidden" animate="visible" variants={staggerVariants} className="mb-8">
-            <h1 className="font-display font-semibold text-[32px] text-primary mb-2">Welcome Back</h1>
-            <p className="font-sans text-base text-secondary">Log in to your account to continue.</p>
+            <h1 className="font-display font-semibold text-[32px] text-primary mb-2">
+              {requires2fa ? 'Two-Factor Auth' : 'Welcome Back'}
+            </h1>
+            <p className="font-sans text-base text-secondary">
+              {requires2fa ? 'Enter the 6-digit code from your authenticator app.' : 'Log in to your account to continue.'}
+            </p>
           </motion.div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <motion.div custom={1} initial="hidden" animate="visible" variants={staggerVariants}>
-              <label className="block font-sans font-medium text-[13px] text-secondary mb-1.5">Username</label>
-              <div className="relative">
-                <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-                <input
-                  type="text"
-                  required
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full h-11 bg-elevated border border-subtle rounded-lg pl-10 pr-4 font-sans text-[14px] text-primary placeholder:text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue focus-pulse transition-all"
-                  placeholder="e.g. alex.dev"
-                />
-              </div>
-            </motion.div>
+            {!requires2fa ? (
+              <>
+                <motion.div custom={1} initial="hidden" animate="visible" variants={staggerVariants}>
+                  <label className="block font-sans font-medium text-[13px] text-secondary mb-1.5">Username</label>
+                  <div className="relative">
+                    <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+                    <input
+                      type="text"
+                      required
+                      value={formData.username}
+                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      className="w-full h-11 bg-elevated border border-subtle rounded-lg pl-10 pr-4 font-sans text-[14px] text-primary placeholder:text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue focus-pulse transition-all"
+                      placeholder="e.g. alex.dev"
+                    />
+                  </div>
+                </motion.div>
 
-            <motion.div custom={2} initial="hidden" animate="visible" variants={staggerVariants}>
-              <label className="block font-sans font-medium text-[13px] text-secondary mb-1.5">Password</label>
-              <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-                <input
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full h-11 bg-elevated border border-subtle rounded-lg pl-10 pr-4 font-sans text-[14px] text-primary placeholder:text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue focus-pulse transition-all"
-                  placeholder="••••••••"
-                />
-              </div>
-            </motion.div>
+                <motion.div custom={2} initial="hidden" animate="visible" variants={staggerVariants}>
+                  <label className="block font-sans font-medium text-[13px] text-secondary mb-1.5">Password</label>
+                  <div className="relative">
+                    <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+                    <input
+                      type="password"
+                      required
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="w-full h-11 bg-elevated border border-subtle rounded-lg pl-10 pr-4 font-sans text-[14px] text-primary placeholder:text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue focus-pulse transition-all"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                </motion.div>
+              </>
+            ) : (
+              <motion.div custom={1} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+                <label className="block font-sans font-medium text-[13px] text-secondary mb-1.5">6-Digit Code</label>
+                <div className="relative">
+                  <KeyRound size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    value={twoFactorCode}
+                    onChange={(e) => setTwoFactorCode(e.target.value)}
+                    className="w-full h-11 bg-elevated border border-subtle rounded-lg pl-10 pr-4 font-sans text-[14px] text-primary placeholder:text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue focus-pulse transition-all"
+                    placeholder="123456"
+                  />
+                </div>
+              </motion.div>
+            )}
 
             <motion.div custom={3} initial="hidden" animate="visible" variants={staggerVariants} className="pt-4">
               <button
                 type="submit"
-                disabled={mutation.isPending}
+                disabled={loginMutation.isPending || verify2faMutation.isPending}
                 className="w-full h-11 bg-accent-blue hover:bg-[#3d7ae6] active:scale-[0.98] text-white font-sans font-semibold text-[14px] rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-[0_0_12px_rgba(79,142,247,0.4)] hover:-translate-y-[1px]"
               >
-                {mutation.isPending ? <Loader2 size={18} className="animate-spin" /> : 'Log In'}
-                {!mutation.isPending && <ArrowRight size={16} />}
+                {loginMutation.isPending || verify2faMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : (requires2fa ? 'Verify' : 'Log In')}
+                {!loginMutation.isPending && !verify2faMutation.isPending && <ArrowRight size={16} />}
               </button>
             </motion.div>
           </form>
+          
+          {!requires2fa && (
+            <motion.div custom={4} initial="hidden" animate="visible" variants={staggerVariants} className="mt-6 flex flex-col items-center">
+              <div className="relative w-full mb-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-subtle"></div>
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-base px-2 text-muted font-medium uppercase tracking-wider">or continue with</span>
+                </div>
+              </div>
+              <GoogleLogin 
+                onSuccess={(res) => googleLoginMutation.mutate(res.credential)}
+                onError={() => addToast({ type: 'error', message: 'Google login failed' })}
+                shape="rectangular"
+                theme="filled_blue"
+                text="signin_with"
+                size="large"
+                width="100%"
+              />
+            </motion.div>
+          )}
 
-          <motion.div custom={4} initial="hidden" animate="visible" variants={staggerVariants} className="mt-8 text-center flex flex-col gap-2">
+          <motion.div custom={5} initial="hidden" animate="visible" variants={staggerVariants} className="mt-8 text-center flex flex-col gap-2">
             <p className="font-sans text-[14px] text-secondary">
               Don't have an account?{' '}
               <Link to="/register" className="text-accent-blue font-medium hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 -mx-1">

@@ -186,6 +186,26 @@ const Register = () => {
             </motion.div>
           </form>
 
+          <motion.div custom={4.5} initial="hidden" animate="visible" variants={staggerVariants} className="mt-6 flex flex-col items-center">
+            <div className="relative w-full mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-subtle"></div>
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-base px-2 text-muted font-medium uppercase tracking-wider">or sign up with</span>
+              </div>
+            </div>
+            <GoogleLogin 
+              onSuccess={(res) => googleLoginMutation.mutate(res.credential)}
+              onError={() => addToast({ type: 'error', message: 'Google login failed' })}
+              shape="rectangular"
+              theme="filled_blue"
+              text="signup_with"
+              size="large"
+              width="100%"
+            />
+          </motion.div>
+
           <motion.div custom={5} initial="hidden" animate="visible" variants={staggerVariants} className="mt-8 text-center">
             <p className="font-sans text-[14px] text-secondary">
               Already have an account?{' '}

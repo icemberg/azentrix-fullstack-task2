@@ -20,6 +20,12 @@ import com.azentrix.task_management_system.service.interfaces.BoardService;
 import com.azentrix.task_management_system.service.interfaces.BoardBroadcastService;
 import com.azentrix.task_management_system.mapper.EntityMapper;
 
+import com.azentrix.task_management_system.entity.TeamMember;
+import com.azentrix.task_management_system.entity.User;
+import com.azentrix.task_management_system.repository.TeamMemberRepository;
+import com.azentrix.task_management_system.service.interfaces.NotificationService;
+import com.azentrix.task_management_system.service.interfaces.EmailService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,6 +39,9 @@ public class BoardServiceImpl implements BoardService {
     private final TeamRepository teamRepository;
     private final BoardBroadcastService broadcastService;
     private final EntityMapper entityMapper;
+    private final TeamMemberRepository teamMemberRepository;
+    private final NotificationService notificationService;
+    private final EmailService emailService;
 
     @Override
     @Transactional
@@ -53,6 +62,20 @@ public class BoardServiceImpl implements BoardService {
         Board savedBoard = boardRepository.save(board);
         log.info("Board created successfully with ID: {}", savedBoard.getBoardId());
         broadcastService.broadcastBoardCreated(savedBoard);
+        
+        // Notify team members
+        String creatorUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<TeamMember> members = teamMemberRepository.findByTeamTeamId(board.getTeam().getTeamId());
+        for (TeamMember member : members) {
+            User user = member.getUser();
+            if (!user.getUsername().equals(creatorUsername) && user.getPushBoardUpdates() != null && user.getPushBoardUpdates()) {
+                String message = creatorUsername + " created a new board: " + savedBoard.getBoardname();
+                String link = "/dashboard/boards/" + savedBoard.getBoardId();
+                notificationService.createAndSendNotification(user, message, "BOARD_UPDATE", link);
+                emailService.sendNotificationEmail(user.getEmail(), "New Board Created", message, link);
+            }
+        }
+
         return entityMapper.toBoardResponse(savedBoard, List.of());
     }
 

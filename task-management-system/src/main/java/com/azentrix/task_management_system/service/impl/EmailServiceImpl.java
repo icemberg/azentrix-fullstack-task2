@@ -97,7 +97,29 @@ public class EmailServiceImpl implements EmailService {
     @Value("${frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
-    private void sendEmail(String to, String subject, String text, boolean isHtml) {
+    public void sendNotificationEmail(String to, String subject, String messageContent, String link) {
+        String html = "<!DOCTYPE html>" +
+                "<html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>" +
+                "<style>" +
+                "  body { font-family: 'Inter', sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }" +
+                "  .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.05); }" +
+                "  .header { background-color: #0f172a; padding: 32px 40px; text-align: center; border-bottom: 3px solid #3b82f6; }" +
+                "  .header-title { color: #ffffff; font-size: 24px; font-weight: 700; margin: 0; }" +
+                "  .content { padding: 40px; color: #334155; line-height: 1.6; font-size: 16px; }" +
+                "  .button { background-color: #3b82f6; color: #ffffff !important; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block; margin-top: 24px; }" +
+                "</style></head><body>" +
+                "  <div class='container'>" +
+                "    <div class='header'><h1 class='header-title'>TaskFlow</h1></div>" +
+                "    <div class='content'>" +
+                "      <p>" + messageContent + "</p>";
+        if (link != null && !link.isEmpty()) {
+            html += "      <div style='text-align: center;'><a href='" + frontendUrl + link + "' class='button'>View Details</a></div>";
+        }
+        html += "    </div></div></body></html>";
+        sendEmail(to, subject, html, true);
+    }
+
+    public void sendEmail(String to, String subject, String text, boolean isHtml) {
         try {
             jakarta.mail.internet.MimeMessage message = mailSender.createMimeMessage();
             org.springframework.mail.javamail.MimeMessageHelper helper = new org.springframework.mail.javamail.MimeMessageHelper(

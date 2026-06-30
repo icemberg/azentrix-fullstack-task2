@@ -58,6 +58,12 @@ public class User {
 	@Column(name = "two_factor_enabled")
 	private Boolean twoFactorEnabled = false;
 
+	@Column(name = "two_factor_secret")
+	private String twoFactorSecret;
+
+	@Column(name = "auth_provider")
+	private String authProvider = "LOCAL";
+
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "role_id", nullable = false)
 	private Role role;

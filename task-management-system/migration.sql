@@ -63,4 +63,7 @@ UPDATE boards SET team_id = (SELECT MIN(team_id) FROM teams WHERE is_personal = 
 ALTER TABLE boards MODIFY COLUMN team_id BIGINT NOT NULL;
 ALTER TABLE boards ADD CONSTRAINT fk_boards_teams FOREIGN KEY (team_id) REFERENCES teams(team_id) ON DELETE CASCADE;
 
+ALTER TABLE users ADD COLUMN two_factor_secret VARCHAR(255);
+ALTER TABLE users ADD COLUMN auth_provider VARCHAR(50) DEFAULT 'LOCAL';
+
 COMMIT;

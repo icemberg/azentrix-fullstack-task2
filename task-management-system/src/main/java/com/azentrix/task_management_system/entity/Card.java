@@ -61,6 +61,9 @@ public class Card {
     @Column(nullable = false, length = 20)
     private CardStateEnum state;
 
+    @Column(name = "due_notification_sent")
+    private Boolean dueNotificationSent = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "board_id", nullable = false)
     private Board board;

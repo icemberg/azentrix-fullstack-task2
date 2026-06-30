@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
+import java.time.LocalDateTime;
 import com.azentrix.task_management_system.entity.Board;
 import com.azentrix.task_management_system.entity.Card;
 
@@ -16,6 +16,8 @@ import jakarta.transaction.Transactional;
 @Repository
 public interface CardRepository extends JpaRepository<Card, Long> {
     List<Card> findByAssigneeId(Long assigneeId);
+
+    List<Card> findByDueDateBetweenAndDueNotificationSentFalse(LocalDateTime start, LocalDateTime end);
 
     List<Card> findByBoard(Board board);
 

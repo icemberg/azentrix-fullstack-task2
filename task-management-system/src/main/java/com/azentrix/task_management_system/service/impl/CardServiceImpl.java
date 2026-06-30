@@ -25,6 +25,7 @@ import com.azentrix.task_management_system.repository.BoardRepository;
 import com.azentrix.task_management_system.repository.UserRepository;
 import com.azentrix.task_management_system.service.interfaces.CardService;
 import com.azentrix.task_management_system.service.interfaces.EmailService;
+import com.azentrix.task_management_system.service.interfaces.NotificationService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +41,7 @@ public class CardServiceImpl implements CardService {
     private final BoardBroadcastService broadcastService;
     private final EntityMapper entityMapper;
     private final EmailService emailService;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -75,9 +77,13 @@ public class CardServiceImpl implements CardService {
         if (!currentUser.getUserId().equals(savedCard.getAssigneeId())) {
             userRepository.findById(savedCard.getAssigneeId()).ifPresent(assignee -> {
                 emailService.sendAssignmentEmail(assignee, savedCard);
+                notificationService.createAndSendNotification(assignee, "You have been assigned to task: " + savedCard.getTitle(), "ASSIGNMENT", "/dashboard/boards/" + board.getBoardId());
             });
         }
         
+        processMentions(cardRequest.getTitle(), savedCard, currentUsername);
+        processMentions(cardRequest.getDescription(), savedCard, currentUsername);
+
         log.debug("Card creation broadcasted for board ID: {}", board.getBoardId());
         return entityMapper.toCardResponse(savedCard);
     }
@@ -144,9 +150,13 @@ public class CardServiceImpl implements CardService {
         if (cardRequest.getAssigneeId() != null && !cardRequest.getAssigneeId().equals(oldAssignee)) {
             userRepository.findById(cardRequest.getAssigneeId()).ifPresent(assignee -> {
                 emailService.sendAssignmentEmail(assignee, savedCard);
+                notificationService.createAndSendNotification(assignee, "You have been assigned to task: " + savedCard.getTitle(), "ASSIGNMENT", "/dashboard/boards/" + board.getBoardId());
             });
         }
         
+        processMentions(cardRequest.getTitle(), savedCard, getCurrentUsername());
+        processMentions(cardRequest.getDescription(), savedCard, getCurrentUsername());
+
         log.debug("Card update broadcasted for board ID: {}", board.getBoardId());
         return entityMapper.toCardResponse(savedCard);
     }
@@ -208,6 +218,24 @@ public class CardServiceImpl implements CardService {
         if (!card.getAssigneeId().equals(currentUser.getUserId()) && !card.getUser().getUserId().equals(currentUser.getUserId())) {
             log.warn("User '{}' attempted to access card assigned to user ID '{}'", currentUsername, card.getAssigneeId());
             throw new AccessDeniedException("You can only manage your own cards");
+        }
+    }
+
+    private void processMentions(String text, Card card, String currentUsername) {
+        if (text == null) return;
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("@(\\w+)").matcher(text);
+        while (matcher.find()) {
+            String mentionedUsername = matcher.group(1);
+            if (!mentionedUsername.equals(currentUsername)) {
+                userRepository.findByUsername(mentionedUsername).ifPresent(mentionedUser -> {
+                    if (mentionedUser.getEmailMentions() != null && mentionedUser.getEmailMentions()) {
+                        String message = currentUsername + " mentioned you in task: " + card.getTitle();
+                        String link = "/dashboard/boards/" + card.getBoard().getBoardId();
+                        notificationService.createAndSendNotification(mentionedUser, message, "MENTION", link);
+                        emailService.sendNotificationEmail(mentionedUser.getEmail(), "You were mentioned in a task", message, link);
+                    }
+                });
+            }
         }
     }
 }
