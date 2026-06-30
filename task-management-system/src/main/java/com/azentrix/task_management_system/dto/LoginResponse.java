@@ -16,9 +16,12 @@ public class LoginResponse {
     
     private String avatar;
 
-    public LoginResponse(String token, String username, String role, String avatar) {
+    private String email;
+
+    public LoginResponse(String token, String username, String email, String role, String avatar) {
         this.token = token;
         this.username = username;
+        this.email = email;
         this.role = role;
         this.avatar = avatar;
     }

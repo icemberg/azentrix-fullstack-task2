@@ -11,11 +11,12 @@ import { motion } from 'framer-motion';
 const Invite = () => {
   const { token } = useParams();
   const navigate = useNavigate();
-  const tokenStore = useAuthStore((state) => state.token);
+  const { token: tokenStore, user } = useAuthStore((state) => state);
   const isAuthenticated = !!tokenStore;
   const addToast = useToastStore(state => state.addToast);
   const { fetchTeams, setActiveTeam } = useTeamStore();
   const queryClient = useQueryClient();
+  const logout = useAuthStore(state => state.logout);
 
   const { data: invite, isLoading, isError, error } = useQuery({
     queryKey: ['invite', token],
@@ -40,11 +41,18 @@ const Invite = () => {
   const handleAccept = () => {
     if (!isAuthenticated) {
       addToast({ type: 'warning', message: 'You must log in or register first to accept this invitation' });
-      navigate('/login'); // We could pass a returnUrl in state to come back here
+      navigate('/login'); 
       return;
     }
     acceptMutation.mutate();
   };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { state: { from: { pathname: `/invite/${token}` } } });
+  };
+
+  const isEmailMatch = isAuthenticated && user && invite && (user.email === invite.invitedEmail);
 
   return (
     <div className="min-h-dvh flex items-center justify-center bg-base p-4">
@@ -93,6 +101,18 @@ const Invite = () => {
                 >
                   Log in
                 </Link>
+              </div>
+            ) : !isEmailMatch ? (
+              <div className="w-full space-y-4">
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-[13px] text-left leading-relaxed">
+                  You are logged in as <strong>{user.email || user.username}</strong>, but this invitation was sent to <strong>{invite.invitedEmail}</strong>.
+                </div>
+                <button 
+                  onClick={handleLogout}
+                  className="w-full h-11 border border-dim text-primary flex items-center justify-center rounded-lg font-medium transition-colors hover:bg-hover"
+                >
+                  Log out and switch account
+                </button>
               </div>
             ) : (
               <button

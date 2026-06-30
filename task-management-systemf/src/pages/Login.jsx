@@ -20,7 +20,7 @@ const Login = () => {
   const mutation = useMutation({
     mutationFn: loginApi,
     onSuccess: (data) => {
-      setAuth(data.token, { username: data.username, role: data.role, avatar: data.avatar });
+      setAuth(data.token, { username: data.username, email: data.email, role: data.role, avatar: data.avatar });
       addToast({ type: 'success', message: 'Welcome back!' });
       navigate(from, { replace: true });
     },

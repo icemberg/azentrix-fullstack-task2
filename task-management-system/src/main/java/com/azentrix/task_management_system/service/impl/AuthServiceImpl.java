@@ -83,7 +83,8 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("User logged in successfully with role: {}", roles.get(0));
         String avatar = user != null ? user.getAvatar() : null;
-        return new LoginResponse(jwtToken, userDetails.getUsername(), roles.get(0), avatar);
+        String email = user != null ? user.getEmail() : null;
+        return new LoginResponse(jwtToken, userDetails.getUsername(), email, roles.get(0), avatar);
     }
 
     public User register(RegisterRequest registerRequest) {
