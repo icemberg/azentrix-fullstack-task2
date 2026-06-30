@@ -16,7 +16,7 @@ This project is a Multi-User Task Management System (a mini Trello) designed to 
 *   **Docker Ready**: Multi-stage Dockerfiles provided for both backend and frontend for easy free-tier deployment (Render, Railway, Vercel, etc.).
 
 ## Live Demo
-> **Live Link:** [https://taskflow-movd.onrender.com]((https://taskflow-movd.onrender.com/) 
+> **Live Link:** [https://taskflow-movd.onrender.com](https://taskflow-movd.onrender.com/) 
 
 ## Tech Stack
 *   **Backend**: Java, Spring Boot, Spring Data JPA, Spring Security, JWT, WebSockets (STOMP), JavaMailSender.
