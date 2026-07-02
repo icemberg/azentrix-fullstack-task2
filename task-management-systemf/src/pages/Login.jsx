@@ -11,13 +11,13 @@ import { GoogleLogin } from '@react-oauth/google';
 import api from '../api/axios';
 
 const Login = () => {
+  const location = useLocation();
   const [formData, setFormData] = useState({ username: '', password: '' });
-  const [requires2fa, setRequires2fa] = useState(false);
+  const [requires2fa, setRequires2fa] = useState(location.state?.requires2fa || false);
   const [twoFactorCode, setTwoFactorCode] = useState('');
-  const [pendingUsername, setPendingUsername] = useState('');
+  const [pendingUsername, setPendingUsername] = useState(location.state?.username || '');
   
   const navigate = useNavigate();
-  const location = useLocation();
   const setAuth = useAuthStore((state) => state.setAuth);
   const addToast = useToastStore((state) => state.addToast);
 
@@ -61,13 +61,19 @@ const Login = () => {
 
   const googleLoginMutation = useMutation({
     mutationFn: async (credential) => {
-      const response = await api.post('/v1/auth/google', { idToken: credential });
+      const response = await api.post('/auth/google', { idToken: credential });
       return response.data;
     },
     onSuccess: (data) => {
-      setAuth(data.token, { username: data.username, email: data.email, role: data.role, avatar: data.avatar });
-      addToast({ type: 'success', message: 'Google login successful!' });
-      navigate(from, { replace: true });
+      if (data.requires2fa) {
+        setRequires2fa(true);
+        setPendingUsername(data.username);
+        addToast({ type: 'info', message: '2FA verification required' });
+      } else {
+        setAuth(data.token, { username: data.username, email: data.email, role: data.role, avatar: data.avatar });
+        addToast({ type: 'success', message: 'Google login successful!' });
+        navigate(from, { replace: true });
+      }
     },
     onError: (error) => {
       addToast({ type: 'error', message: error.response?.data?.message || 'Google login failed' });

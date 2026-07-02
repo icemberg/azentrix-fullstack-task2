@@ -8,6 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import com.azentrix.task_management_system.security.UserDetailsImpl;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
@@ -198,10 +199,12 @@ public class AuthServiceImpl implements AuthService {
                     teamService.createTeam(user.getUsername() + "'s Workspace", "Personal workspace", "#3b82f6", user);
                 }
 
-                UserDetails userDetails = new org.springframework.security.core.userdetails.User(
-                    user.getUsername(), user.getPassword(), 
-                    Collections.singletonList(new SimpleGrantedAuthority(user.getRole().getName().name()))
-                );
+                if (user.getTwoFactorEnabled() != null && user.getTwoFactorEnabled()) {
+                    log.info("User {} requires 2FA verification", user.getUsername());
+                    return new LoginResponse(user.getUsername(), true);
+                }
+
+                UserDetailsImpl userDetails = UserDetailsImpl.build(user);
                 Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 

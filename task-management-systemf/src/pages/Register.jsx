@@ -40,17 +40,19 @@ const Register = () => {
 
   const googleLoginMutation = useMutation({
     mutationFn: async (credential) => {
-      const response = await api.post('/v1/auth/google', { idToken: credential });
+      const response = await api.post('/auth/google', { idToken: credential });
       return response.data;
     },
     onSuccess: (data) => {
-      // For registration with Google, the backend currently handles it identically to login
-      // If the user doesn't exist, it creates them. 
-      // If we had a separate store logic, we'd use setAuth here. Let's just import and use setAuth.
-      useAuthStore.getState().setAuth(data.token, { username: data.username, email: data.email, role: data.role, avatar: data.avatar });
-      addToast({ type: 'success', message: 'Signed up with Google successfully!' });
-      const from = location.state?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
+      if (data.requires2fa) {
+        addToast({ type: 'info', message: '2FA verification required' });
+        navigate('/login', { state: { requires2fa: true, username: data.username } });
+      } else {
+        useAuthStore.getState().setAuth(data.token, { username: data.username, email: data.email, role: data.role, avatar: data.avatar });
+        addToast({ type: 'success', message: 'Signed up with Google successfully!' });
+        const from = location.state?.from?.pathname || '/dashboard';
+        navigate(from, { replace: true });
+      }
     },
     onError: (error) => {
       addToast({ type: 'error', message: error.response?.data?.message || 'Google signup failed' });

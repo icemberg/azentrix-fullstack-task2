@@ -357,7 +357,7 @@ const Board = () => {
                     >
                       <option value="">Unassigned (Defaults to you)</option>
                       {users?.map(user => (
-                        <option key={user.userId} value={user.userId}>
+                        <option key={user.id} value={user.id}>
                           {user.username}
                         </option>
                       ))}
@@ -481,7 +481,7 @@ const Board = () => {
                     >
                       <option value="">Unassigned</option>
                       {users?.map(user => (
-                        <option key={user.userId} value={user.userId}>
+                        <option key={user.id} value={user.id}>
                           {user.username}
                         </option>
                       ))}

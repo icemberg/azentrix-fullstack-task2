@@ -83,11 +83,11 @@ const CardItem = ({ card, onClick }) => {
           <Clock size={13} />
           <span className="font-mono text-[11px] font-medium">{format(new Date(card.dueDate), 'MMM d')}</span>
         </div>
-        <div className="w-6 h-6 rounded-full bg-surface border border-subtle flex items-center justify-center">
-          <span className="font-display font-bold text-[10px] text-secondary">
-            {card.user?.username?.charAt(0).toUpperCase() || 'U'}
-          </span>
-        </div>
+        <Avatar 
+          src={card.user?.avatar} 
+          fallback={card.user?.username?.charAt(0).toUpperCase() || 'U'} 
+          className="w-6 h-6 text-[10px]"
+        />
       </div>
     </div>
   );
