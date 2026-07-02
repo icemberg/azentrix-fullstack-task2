@@ -22,12 +22,14 @@ export const useWebSocket = (boardId, teamId) => {
       connectHeaders: {
         Authorization: `Bearer ${token}`
       },
-      reconnectDelay: 5000,
+      // Initial reconnect delay (1 second)
+      reconnectDelay: 1000,
       debug: function (str) {
         console.debug(str);
       },
       onConnect: () => {
         setStatus('online');
+        client.current.reconnectDelay = 1000; // Reset to 1s on successful connection
         
         if (boardId) {
           client.current.subscribe(`/topic/board/${boardId}`, (message) => {
@@ -40,6 +42,12 @@ export const useWebSocket = (boardId, teamId) => {
             queryClient.invalidateQueries({ queryKey: ['boards', Number(teamId)] });
           });
         }
+      },
+      onWebSocketClose: () => {
+        setStatus('offline');
+        // Exponential backoff: double the delay up to a max of 16 seconds
+        const nextDelay = Math.min(client.current.reconnectDelay * 2, 16000);
+        client.current.reconnectDelay = nextDelay;
       },
       onDisconnect: () => {
         setStatus('offline');

@@ -69,7 +69,7 @@ const TeamSwitcher = ({ isCollapsed }) => {
                 Your Workspaces
               </div>
               
-              <div className="max-h-60 overflow-y-auto">
+              <div className="max-h-[50vh] overflow-y-auto custom-scrollbar">
                 {teams.map((team) => (
                   <button
                     key={team.teamId}

@@ -75,4 +75,26 @@ public class SessionController {
         }
         return ResponseEntity.notFound().build();
     }
+
+    @DeleteMapping("/other")
+    public ResponseEntity<?> revokeOtherSessions(HttpServletRequest request) {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();
+        
+        String jwt = parseJwt(request);
+        String currentSessionId = jwt != null ? jwtUtils.getSessionIdFromJwtToken(jwt) : null;
+
+        if (currentSessionId == null) {
+            return ResponseEntity.badRequest().body("Invalid current session");
+        }
+
+        List<UserSession> sessions = userSessionRepository.findByUser_UserIdAndActiveTrueOrderByLastActiveAtDesc(user.getUserId());
+        for (UserSession session : sessions) {
+            if (!session.getSessionId().equals(currentSessionId)) {
+                session.setActive(false);
+                userSessionRepository.save(session);
+            }
+        }
+        return ResponseEntity.ok().build();
+    }
 }

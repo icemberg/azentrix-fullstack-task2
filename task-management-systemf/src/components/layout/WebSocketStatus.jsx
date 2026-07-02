@@ -42,22 +42,47 @@ const WebSocketStatus = () => {
   const currentConfig = config[status] || config.offline;
 
   return (
-    <motion.div
-      key={pulseKey}
-      className={`fixed bottom-4 z-50 flex items-center gap-1.5 bg-elevated border border-subtle rounded-md px-2.5 py-1.5 shadow-lg ${status === 'online' ? 'focus-pulse' : ''}`}
-      style={{ '--tw-shadow-color': 'rgba(34, 201, 138, 0.4)' }} // Make the pulse emerald
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0, left: isCollapsed ? 64 : 236 }}
-      transition={{ duration: 0.3 }}
-    >
+    <>
+      <AnimatePresence>
+        {status !== 'online' && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            transition={{ duration: 0.3 }}
+            className={`fixed top-0 left-0 right-0 z-[100] flex items-center justify-center py-2 px-4 shadow-sm backdrop-blur-md border-b ${
+              status === 'offline' 
+                ? 'bg-accent-red/10 border-accent-red/20 text-accent-red' 
+                : 'bg-accent-amber/10 border-accent-amber/20 text-accent-amber'
+            }`}
+          >
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <div className={`w-2 h-2 rounded-full ${currentConfig.color} animate-pulse`} />
+              {status === 'offline' 
+                ? "You're offline. Changes won't sync until reconnected."
+                : "Reconnecting to server... Changes will sync automatically."}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.div
-        animate={currentConfig.dotAnim}
-        className={`w-1.5 h-1.5 rounded-full ${currentConfig.color}`}
-      />
-      <span className={`font-sans font-medium text-[11px] ${currentConfig.textColor}`}>
-        {currentConfig.text}
-      </span>
-    </motion.div>
+        key={pulseKey}
+        className={`fixed bottom-4 z-50 flex items-center gap-1.5 bg-elevated border border-subtle rounded-md px-2.5 py-1.5 shadow-lg ${status === 'online' ? 'focus-pulse' : ''}`}
+        style={{ '--tw-shadow-color': 'rgba(34, 201, 138, 0.4)' }} // Make the pulse emerald
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0, left: isCollapsed ? 64 : 236 }}
+        transition={{ duration: 0.3 }}
+      >
+        <motion.div
+          animate={currentConfig.dotAnim}
+          className={`w-1.5 h-1.5 rounded-full ${currentConfig.color}`}
+        />
+        <span className={`font-sans font-medium text-[11px] ${currentConfig.textColor}`}>
+          {currentConfig.text}
+        </span>
+      </motion.div>
+    </>
   );
 };
 

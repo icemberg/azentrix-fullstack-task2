@@ -188,10 +188,7 @@ public class CardServiceImpl implements CardService {
             return new ResourceNotFoundException("Card not found with id: " + cardId);
         });
         
-        if(userId != card.getUser().getUserId()) {
-            log.warn("User ID {} is not allowed to move card ID: {}", userId, cardId);
-            throw new AccessDeniedException("User not allowed to access this card with cardId: "+ cardId);
-        }
+        ensureOwner(card);
 
         log.debug("Updating card state for ID: {}", cardId);
         card.setState(request.getShift());

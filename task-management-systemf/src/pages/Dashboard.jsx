@@ -22,7 +22,13 @@ const Dashboard = () => {
   const [newBoardDescription, setNewBoardDescription] = useState('');
   const queryClient = useQueryClient();
   const addToast = useToastStore(state => state.addToast);
-  const { activeTeamId } = useTeamStore();
+  const { teams, activeTeamId } = useTeamStore();
+  const { data: user } = useQuery({ queryKey: ['current-user'] });
+
+  const activeTeam = teams.find(t => t.teamId === activeTeamId);
+  const isTeamAdmin = activeTeam?.currentUserRole === 'TEAM_ADMIN';
+  const isGlobalAdmin = user?.role === 'ADMIN';
+  const canCreateBoard = isTeamAdmin || isGlobalAdmin;
 
   useWebSocket(null, activeTeamId);
 
@@ -95,18 +101,18 @@ const Dashboard = () => {
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
             >
               {/* Create New Board Card */}
-              <motion.button
-                variants={itemVariants}
-                onClick={() => setIsModalOpen(true)}
-                className="group h-36 bg-surface border border-dashed border-subtle hover:border-accent-blue rounded-xl flex flex-col items-center justify-center gap-3 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-              >
-                <div className="w-10 h-10 rounded-full bg-elevated group-hover:bg-accent-blue/10 flex items-center justify-center transition-colors duration-200">
-                  <Plus size={20} className="text-secondary group-hover:text-accent-blue transition-colors duration-200" />
-                </div>
-                <span className="font-sans font-medium text-[14px] text-secondary group-hover:text-primary transition-colors duration-200">
-                  Create new board
-                </span>
-              </motion.button>
+              {canCreateBoard && (
+                <motion.button
+                  variants={itemVariants}
+                  onClick={() => setIsModalOpen(true)}
+                  className="group relative flex h-[160px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-dim bg-surface hover:border-accent-blue/50 hover:bg-accent-blue/5 transition-all focus:outline-none focus:ring-2 focus:ring-accent-blue"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-base shadow-sm group-hover:scale-110 group-hover:bg-accent-blue group-hover:text-white transition-all text-secondary">
+                    <Plus size={20} />
+                  </div>
+                  <span className="font-sans font-medium text-[14px] text-secondary group-hover:text-primary">Create New Board</span>
+                </motion.button>
+              )}
 
               {/* Board Cards */}
               {boards?.map((board) => (

@@ -14,3 +14,8 @@ export const getAllUsers = async () => {
   const { data } = await api.get('/users');
   return data;
 };
+
+export const getMyTasks = async () => {
+  const { data } = await api.get('/users/me/tasks');
+  return data;
+};

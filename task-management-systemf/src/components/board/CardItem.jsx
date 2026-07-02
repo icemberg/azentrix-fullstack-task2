@@ -1,11 +1,11 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Clock, GripVertical } from 'lucide-react';
+import { Clock, GripVertical, Lock } from 'lucide-react';
 import Badge from '../ui/Badge';
 import Avatar from '../ui/Avatar';
 import { cn } from '../../utils/cn';
-import { format } from 'date-fns';
+import { format, isToday, isBefore, startOfDay } from 'date-fns';
 
 const priorityColors = {
   LOW: 'default',
@@ -14,7 +14,7 @@ const priorityColors = {
   URGENT: 'danger',
 };
 
-const CardItem = ({ card, onClick }) => {
+const CardItem = ({ card, onClick, canEdit = true }) => {
   const {
     attributes,
     listeners,
@@ -22,24 +22,34 @@ const CardItem = ({ card, onClick }) => {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: card.id, data: { ...card } });
+  } = useSortable({ 
+    id: card.id, 
+    data: { ...card },
+    disabled: !canEdit
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
 
+  const dateObj = card.dueDate ? new Date(card.dueDate) : null;
+  const isDueToday = dateObj ? isToday(dateObj) : false;
+  const isOverdue = dateObj ? isBefore(startOfDay(dateObj), startOfDay(new Date())) && !isDueToday : false;
+  const dateColorClass = isOverdue ? 'text-accent-red bg-accent-red/10 px-1.5 py-0.5 rounded-md' : isDueToday ? 'text-accent-amber bg-accent-amber/10 px-1.5 py-0.5 rounded-md' : 'text-muted';
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group relative flex cursor-pointer flex-col gap-3 rounded-lg border bg-elevated p-4 transition-all duration-200",
+        "group relative flex flex-col gap-3 rounded-lg border bg-elevated p-4 transition-all duration-200",
         isDragging 
           ? "border-accent-blue shadow-glow-blue z-50 rotate-3 opacity-90 scale-[1.02]" 
-          : "border-subtle hover:border-moderate hover:-translate-y-[2px] shadow-sm hover:shadow-md"
+          : "border-subtle hover:border-moderate shadow-sm",
+        canEdit ? "cursor-pointer hover:-translate-y-[2px] hover:shadow-md" : "cursor-default opacity-80"
       )}
-      onClick={() => onClick(card)}
+      onClick={() => canEdit && onClick(card)}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-wrap gap-1.5">
@@ -57,14 +67,16 @@ const CardItem = ({ card, onClick }) => {
             {card.priority}
           </span>
         </div>
-        <div
-          {...attributes}
-          {...listeners}
-          className="cursor-grab text-muted hover:text-primary active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <GripVertical size={14} />
-        </div>
+        {canEdit && (
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab text-muted hover:text-primary active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <GripVertical size={14} />
+          </div>
+        )}
       </div>
 
       <div>
@@ -79,13 +91,22 @@ const CardItem = ({ card, onClick }) => {
       </div>
 
       <div className="mt-2 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-muted">
-          <Clock size={13} />
-          <span className="font-mono text-[11px] font-medium">{format(new Date(card.dueDate), 'MMM d')}</span>
+        <div className="flex items-center gap-2">
+          {!canEdit && (
+            <div className="text-muted opacity-50 flex items-center" title="Read-only">
+              <Lock size={12} />
+            </div>
+          )}
+          {dateObj && (
+            <div className={cn("flex items-center gap-1.5", dateColorClass)}>
+              <Clock size={13} />
+              <span className="font-mono text-[11px] font-medium">{format(dateObj, 'MMM d')}</span>
+            </div>
+          )}
         </div>
         <Avatar 
-          src={card.user?.avatar} 
-          fallback={card.user?.username?.charAt(0).toUpperCase() || 'U'} 
+          src={card.assigneeAvatar || card.user?.avatar} 
+          fallback={card.assigneeUsername?.charAt(0).toUpperCase() || card.user?.username?.charAt(0).toUpperCase() || 'U'} 
           className="w-6 h-6 text-[10px]"
         />
       </div>

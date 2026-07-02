@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate, useLocation } from 'react-router-dom';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import LandingPage from '../pages/LandingPage';
@@ -8,14 +8,16 @@ import Admin from '../pages/Admin';
 import Teams from '../pages/Teams';
 import Invite from '../pages/Invite';
 import Settings from '../pages/Settings';
-import Tasks from '../pages/Tasks';
+import MyTasks from '../pages/MyTasks';
 import { useAuthStore } from '../store/auth.store';
 import AppLayout from '../components/layout/AppLayout';
 import PublicLayout from '../components/layout/PublicLayout';
+import NotFound from '../pages/NotFound';
 
 const ProtectedRoute = ({ children }) => {
   const token = useAuthStore((state) => state.token);
-  if (!token) return <Navigate to="/login" replace />;
+  const location = useLocation();
+  if (!token) return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   return children;
 };
 
@@ -70,8 +72,12 @@ export const router = createBrowserRouter([
       },
       {
         path: '/tasks',
-        element: <Tasks />,
+        element: <MyTasks />,
       },
     ],
   },
+  {
+    path: '*',
+    element: <NotFound />
+  }
 ]);

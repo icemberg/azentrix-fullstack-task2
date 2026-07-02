@@ -73,7 +73,7 @@ public class UserServiceImpl implements UserService {
         if (request.getNewPassword() != null && !request.getNewPassword().isEmpty()) {
             if (user.getPassword() != null) {
                 if (request.getCurrentPassword() == null || !passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-                    throw new UnauthorizedException("Current password is incorrect");
+                    throw new IllegalArgumentException("Current password is incorrect");
                 }
             }
             user.setPassword(passwordEncoder.encode(request.getNewPassword()));

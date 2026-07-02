@@ -51,6 +51,17 @@ const ToastItem = ({ toast, onRemove }) => {
             </button>
           )}
         </p>
+        {toast.action && (
+          <button 
+            onClick={() => {
+              toast.action.onClick();
+              onRemove();
+            }} 
+            className="mt-1.5 w-max text-[12px] font-medium text-accent-blue hover:underline"
+          >
+            {toast.action.label}
+          </button>
+        )}
         {toast.timestamp && (
           <span className="font-mono text-[11px] text-muted mt-0.5">{toast.timestamp}</span>
         )}

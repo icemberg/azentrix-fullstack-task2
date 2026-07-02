@@ -15,8 +15,11 @@ const useTeamStore = create((set, get) => ({
             const teams = await teamApi.getUserTeams();
             set({ teams, isLoading: false });
             
-            // Auto-select personal workspace if no active team
-            if (!get().activeTeamId && teams.length > 0) {
+            // Auto-select personal workspace if no active team or if current activeTeamId is no longer valid (e.g. user removed from team)
+            const currentActiveId = get().activeTeamId;
+            const isCurrentActiveValid = teams.some(t => t.teamId === currentActiveId);
+            
+            if ((!currentActiveId || !isCurrentActiveValid) && teams.length > 0) {
                 const personal = teams.find(t => t.isPersonal) || teams[0];
                 set({ activeTeamId: personal.teamId });
             }

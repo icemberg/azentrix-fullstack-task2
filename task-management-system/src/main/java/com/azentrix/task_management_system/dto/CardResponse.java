@@ -19,12 +19,16 @@ public class CardResponse {
     private String title;
     private String description;
     private Long assigneeId;
+    private String assigneeUsername;
+    private String assigneeAvatar;
+    private Long createdBy;
     private LocalDateTime dueDate;
     private CardPriorityEnum priority;
     private String position;
     private List<String> labels;
     private CardStateEnum state;
     private Long boardId;
+    private String boardName;
     private LocalDateTime updatedAt;
     private UserResponse user;
 }

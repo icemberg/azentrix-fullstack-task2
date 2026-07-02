@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Topbar from '../components/layout/Topbar';
 import { getCurrentUser, updateCurrentUser } from '../api/users.api';
-import { getActiveSessions, revokeSession } from '../api/sessions.api';
+import { getActiveSessions, revokeSession, revokeAllOtherSessions } from '../api/sessions.api';
+import { debounce } from '../utils/debounce';
 import { useAuthStore } from '../store/auth.store';
 import { User, Sliders, Bell, Shield, MonitorSmartphone, Smartphone, Key } from 'lucide-react';
 
@@ -53,6 +54,24 @@ const Settings = () => {
     }
   };
 
+  const revokeAllMutation = useMutation({
+    mutationFn: revokeAllOtherSessions,
+    onSuccess: () => {
+      setMessage('All other sessions revoked successfully.');
+      refetchSessions();
+      setTimeout(() => setMessage(''), 3000);
+    },
+    onError: () => {
+      setMessage('Failed to revoke other sessions.');
+    }
+  });
+
+  const handleRevokeAll = () => {
+    if (confirm('Are you sure you want to sign out all other sessions?')) {
+      revokeAllMutation.mutate();
+    }
+  };
+
   useEffect(() => {
     if (user) {
       setFormData(prev => ({ 
@@ -93,14 +112,49 @@ const Settings = () => {
     }
   });
 
+  const debouncedAutoSave = React.useCallback(
+    debounce((newData) => {
+      let payload = { username: newData.username };
+      if (activeTab === 'preferences') {
+        payload.theme = newData.theme;
+        payload.startOfWeek = newData.startOfWeek;
+        payload.defaultView = newData.defaultView;
+      } else if (activeTab === 'notifications') {
+        payload.emailMentions = newData.emailMentions;
+        payload.emailAssignments = newData.emailAssignments;
+        payload.pushDueReminders = newData.pushDueReminders;
+        payload.pushBoardUpdates = newData.pushBoardUpdates;
+      }
+      updateMutation.mutate(payload);
+    }, 500),
+    [activeTab]
+  );
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
+    const val = type === 'checkbox' ? checked : value;
+    const newData = { ...formData, [name]: val };
+    setFormData(newData);
+    
+    if (activeTab === 'preferences' || activeTab === 'notifications') {
+      debouncedAutoSave(newData);
+    }
   };
 
   const handleAvatarUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      if (!validTypes.includes(file.type)) {
+        setMessage('Please upload an image file (PNG, JPG, GIF)');
+        return;
+      }
+      
+      // Limit to 1MB to prevent Tomcat 500 MaxUploadSizeExceededException
+      if (file.size > 1024 * 1024) {
+        setMessage('Image is too large. Please select an image under 1MB.');
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData({ ...formData, avatar: reader.result });
@@ -112,7 +166,29 @@ const Settings = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setMessage('');
-    updateMutation.mutate(formData);
+    
+    // Only send relevant data based on the active tab to prevent sending large avatars 
+    // repeatedly or triggering validation on unchanged tabs
+    let payload = { username: formData.username };
+    
+    if (activeTab === 'profile') {
+      payload.avatar = formData.avatar;
+    } else if (activeTab === 'preferences') {
+      payload.theme = formData.theme;
+      payload.startOfWeek = formData.startOfWeek;
+      payload.defaultView = formData.defaultView;
+    } else if (activeTab === 'notifications') {
+      payload.emailMentions = formData.emailMentions;
+      payload.emailAssignments = formData.emailAssignments;
+      payload.pushDueReminders = formData.pushDueReminders;
+      payload.pushBoardUpdates = formData.pushBoardUpdates;
+    } else if (activeTab === 'security') {
+      payload.currentPassword = formData.currentPassword;
+      payload.newPassword = formData.newPassword;
+      payload.twoFactorEnabled = formData.twoFactorEnabled;
+    }
+
+    updateMutation.mutate(payload);
   };
 
   if (isLoading) {
@@ -226,8 +302,11 @@ const Settings = () => {
 
                 {/* --- PREFERENCES TAB --- */}
                 {activeTab === 'preferences' && (
-                  <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in">
-                    <h3 className="font-sans font-medium text-lg text-primary mb-4 border-b border-dim pb-2">Display & Workspace</h3>
+                  <form onSubmit={(e) => e.preventDefault()} className="space-y-6 animate-fade-in">
+                    <h3 className="font-sans font-medium text-lg text-primary mb-4 border-b border-dim pb-2 flex items-center justify-between">
+                      Display & Workspace
+                      {updateMutation.isPending && <span className="text-xs text-muted font-normal animate-pulse">Saving...</span>}
+                    </h3>
                     
                     <div className="space-y-5">
                       <div>
@@ -266,19 +345,16 @@ const Settings = () => {
                         </select>
                       </div>
                     </div>
-                    
-                    <div className="pt-4 mt-6 border-t border-dim">
-                      <button type="submit" disabled={updateMutation.isPending} className="h-9 px-4 rounded-md bg-accent-blue text-white font-sans font-medium text-[13px] shadow-sm transition-all hover:bg-[#3d7ae6]">
-                        {updateMutation.isPending ? 'Saving...' : 'Save Preferences'}
-                      </button>
-                    </div>
                   </form>
                 )}
 
                 {/* --- NOTIFICATIONS TAB --- */}
                 {activeTab === 'notifications' && (
-                  <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in">
-                    <h3 className="font-sans font-medium text-lg text-primary mb-4 border-b border-dim pb-2">Notification Triggers</h3>
+                  <form onSubmit={(e) => e.preventDefault()} className="space-y-6 animate-fade-in">
+                    <h3 className="font-sans font-medium text-lg text-primary mb-4 border-b border-dim pb-2 flex items-center justify-between">
+                      Notification Triggers
+                      {updateMutation.isPending && <span className="text-xs text-muted font-normal animate-pulse">Saving...</span>}
+                    </h3>
                     
                     <div className="space-y-4">
                       {[
@@ -308,12 +384,6 @@ const Settings = () => {
                           </div>
                         </div>
                       ))}
-                    </div>
-                    
-                    <div className="pt-4 mt-6 border-t border-dim">
-                      <button type="submit" disabled={updateMutation.isPending} className="h-9 px-4 rounded-md bg-accent-blue text-white font-sans font-medium text-[13px] shadow-sm transition-all hover:bg-[#3d7ae6]">
-                        {updateMutation.isPending ? 'Updating...' : 'Update Notifications'}
-                      </button>
                     </div>
                   </form>
                 )}
@@ -417,6 +487,18 @@ const Settings = () => {
                           );
                         })}
                       </div>
+                      
+                      {activeSessions && activeSessions.length > 1 && (
+                        <div className="pt-4 mt-4 border-t border-dim flex justify-end">
+                          <button 
+                            onClick={handleRevokeAll}
+                            disabled={revokeAllMutation.isPending}
+                            className="h-8 px-3 rounded-md border border-subtle bg-base text-secondary hover:text-primary transition-colors font-medium text-[13px] disabled:opacity-50"
+                          >
+                            Sign out all other sessions
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                   </div>

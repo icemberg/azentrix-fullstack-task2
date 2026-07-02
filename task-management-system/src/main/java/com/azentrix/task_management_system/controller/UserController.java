@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.azentrix.task_management_system.dto.UserResponse;
 import com.azentrix.task_management_system.dto.UserUpdateRequest;
+import com.azentrix.task_management_system.dto.CardResponse;
 import com.azentrix.task_management_system.service.interfaces.UserService;
+import com.azentrix.task_management_system.service.interfaces.CardService;
 import java.util.List;
 
 import jakarta.validation.Valid;
@@ -24,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 public class UserController {
 
     private final UserService userService;
+    private final CardService cardService;
 
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getCurrentUser() {
@@ -44,5 +47,12 @@ public class UserController {
         log.info("Received request to fetch all users");
         List<UserResponse> users = userService.getAllUsers();
         return ResponseEntity.status(HttpStatus.OK).body(users);
+    }
+
+    @GetMapping("/me/tasks")
+    public ResponseEntity<List<CardResponse>> getMyTasks() {
+        log.info("Received request to fetch tasks for current user");
+        List<CardResponse> tasks = cardService.getAllForCurrentUser();
+        return ResponseEntity.status(HttpStatus.OK).body(tasks);
     }
 }

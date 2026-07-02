@@ -13,15 +13,23 @@ import api from '../api/axios';
 const Login = () => {
   const location = useLocation();
   const [formData, setFormData] = useState({ username: '', password: '' });
+  const [errors, setErrors] = useState({});
   const [requires2fa, setRequires2fa] = useState(location.state?.requires2fa || false);
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [pendingUsername, setPendingUsername] = useState(location.state?.username || '');
   
   const navigate = useNavigate();
+  const token = useAuthStore((state) => state.token);
   const setAuth = useAuthStore((state) => state.setAuth);
   const addToast = useToastStore((state) => state.addToast);
 
-  const from = location.state?.from?.pathname || '/dashboard';
+  const from = location.state?.from || '/dashboard';
+
+  React.useEffect(() => {
+    if (token) {
+      navigate(from, { replace: true });
+    }
+  }, [token, navigate, from]);
 
   const loginMutation = useMutation({
     mutationFn: loginApi,
@@ -82,9 +90,22 @@ const Login = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setErrors({});
     if (requires2fa) {
+      if (!twoFactorCode.trim()) {
+        setErrors({ twoFactorCode: 'Verification code is required' });
+        return;
+      }
       verify2faMutation.mutate({ username: pendingUsername, code: twoFactorCode });
     } else {
+      const newErrors = {};
+      if (!formData.username.trim()) newErrors.username = 'Username/Email is required';
+      if (!formData.password) newErrors.password = 'Password is required';
+      
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
+      }
       loginMutation.mutate(formData);
     }
   };
@@ -169,13 +190,13 @@ const Login = () => {
                     <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
                     <input
                       type="text"
-                      required
                       value={formData.username}
                       onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                      className="w-full h-11 bg-elevated border border-subtle rounded-lg pl-10 pr-4 font-sans text-[14px] text-primary placeholder:text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue focus-pulse transition-all"
+                      className={`w-full h-11 bg-elevated border ${errors.username ? 'border-red-500' : 'border-subtle'} rounded-lg pl-10 pr-4 font-sans text-[14px] text-primary placeholder:text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue focus-pulse transition-all`}
                       placeholder="e.g. alex.dev"
                     />
                   </div>
+                  {errors.username && <p className="text-red-500 text-xs mt-1 font-sans">{errors.username}</p>}
                 </motion.div>
 
                 <motion.div custom={2} initial="hidden" animate="visible" variants={staggerVariants}>
@@ -184,13 +205,13 @@ const Login = () => {
                     <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
                     <input
                       type="password"
-                      required
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full h-11 bg-elevated border border-subtle rounded-lg pl-10 pr-4 font-sans text-[14px] text-primary placeholder:text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue focus-pulse transition-all"
+                      className={`w-full h-11 bg-elevated border ${errors.password ? 'border-red-500' : 'border-subtle'} rounded-lg pl-10 pr-4 font-sans text-[14px] text-primary placeholder:text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue focus-pulse transition-all`}
                       placeholder="••••••••"
                     />
                   </div>
+                  {errors.password && <p className="text-red-500 text-xs mt-1 font-sans">{errors.password}</p>}
                 </motion.div>
               </>
             ) : (
@@ -200,14 +221,14 @@ const Login = () => {
                   <KeyRound size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
                   <input
                     type="text"
-                    required
                     maxLength={6}
                     value={twoFactorCode}
                     onChange={(e) => setTwoFactorCode(e.target.value)}
-                    className="w-full h-11 bg-elevated border border-subtle rounded-lg pl-10 pr-4 font-sans text-[14px] text-primary placeholder:text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue focus-pulse transition-all"
+                    className={`w-full h-11 bg-elevated border ${errors.twoFactorCode ? 'border-red-500' : 'border-subtle'} rounded-lg pl-10 pr-4 font-sans text-[14px] text-primary placeholder:text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue focus-pulse transition-all`}
                     placeholder="123456"
                   />
                 </div>
+                {errors.twoFactorCode && <p className="text-red-500 text-xs mt-1 font-sans">{errors.twoFactorCode}</p>}
               </motion.div>
             )}
 

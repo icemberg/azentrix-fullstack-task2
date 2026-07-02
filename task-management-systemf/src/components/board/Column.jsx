@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { Plus } from 'lucide-react';
@@ -12,9 +13,20 @@ const columnColors = {
   DONE: 'bg-accent-emerald/10 text-accent-emerald',
 };
 
-const Column = ({ title, status, cards, onAddCard, onCardClick }) => {
+const Column = ({ title, status, cards, onAddCard, onCardClick, isAdmin, currentUserId, canEditCard }) => {
+  const parentRef = useRef(null);
+
   const { setNodeRef } = useDroppable({
     id: status,
+  });
+
+  const shouldVirtualise = cards.length >= 50;
+
+  const virtualizer = useVirtualizer({
+    count: shouldVirtualise ? cards.length : 0,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 96,
+    overscan: 5,
   });
 
   return (
@@ -35,13 +47,59 @@ const Column = ({ title, status, cards, onAddCard, onCardClick }) => {
       </div>
 
       <div
-        ref={setNodeRef}
-        className="flex flex-1 flex-col gap-3 overflow-y-auto p-3 min-h-0"
+        ref={(node) => {
+          parentRef.current = node;
+          setNodeRef(node);
+        }}
+        style={{ height: 'calc(100dvh - 244px)', overflowY: 'auto' }}
+        className="flex flex-col p-3"
       >
         <SortableContext items={cards.map(c => c.id)} strategy={verticalListSortingStrategy}>
-          {cards.map(card => (
-            <CardItem key={card.id} card={card} onClick={onCardClick} />
-          ))}
+          {shouldVirtualise ? (
+            <div
+              style={{
+                height: `${virtualizer.getTotalSize()}px`,
+                width: '100%',
+                position: 'relative',
+              }}
+            >
+              {virtualizer.getVirtualItems().map((virtualItem) => {
+                const card = cards[virtualItem.index];
+                const canEdit = canEditCard ? canEditCard(card) : (isAdmin || card.assigneeId === currentUserId);
+                return (
+                  <div
+                    key={card.id}
+                    data-index={virtualItem.index}
+                    ref={virtualizer.measureElement}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${virtualItem.start}px)`,
+                      paddingBottom: '12px',
+                    }}
+                  >
+                    <CardItem card={card} onClick={onCardClick} canEdit={canEdit} />
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {cards.map(card => {
+                const canEdit = canEditCard ? canEditCard(card) : (isAdmin || card.assigneeId === currentUserId);
+                return (
+                  <CardItem 
+                    key={card.id} 
+                    card={card} 
+                    onClick={onCardClick} 
+                    canEdit={canEdit} 
+                  />
+                );
+              })}
+            </div>
+          )}
         </SortableContext>
       </div>
     </div>

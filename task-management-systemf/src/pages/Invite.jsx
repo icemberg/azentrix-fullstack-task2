@@ -49,7 +49,7 @@ const Invite = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login', { state: { from: { pathname: `/invite/${token}` } } });
+    navigate('/login', { state: { from: `/invite/${token}` } });
   };
 
   const isEmailMatch = isAuthenticated && user && invite && (user.email === invite.invitedEmail);

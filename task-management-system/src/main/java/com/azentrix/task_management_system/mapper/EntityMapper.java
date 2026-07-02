@@ -12,8 +12,14 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
 
+import com.azentrix.task_management_system.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+
 @Component
 public class EntityMapper {
+
+    @Autowired
+    private UserRepository userRepository;
 
     public UserResponse toUserResponse(User user) {
         if (user == null)
@@ -38,7 +44,7 @@ public class EntityMapper {
     public CardResponse toCardResponse(Card card) {
         if (card == null)
             return null;
-        return CardResponse.builder()
+        CardResponse response = CardResponse.builder()
                 .id(card.getId())
                 .title(card.getTitle())
                 .description(card.getDescription())
@@ -49,9 +55,20 @@ public class EntityMapper {
                 .labels(card.getLabels())
                 .state(card.getState())
                 .boardId(card.getBoard() != null ? card.getBoard().getBoardId() : null)
+                .boardName(card.getBoard() != null ? card.getBoard().getBoardname() : null)
                 .updatedAt(card.getUpdatedAt())
+                .createdBy(card.getUser() != null ? card.getUser().getUserId() : null)
                 .user(toUserResponse(card.getUser()))
                 .build();
+
+        if (response.getAssigneeId() != null) {
+            userRepository.findById(response.getAssigneeId()).ifPresent(u -> {
+                response.setAssigneeUsername(u.getUsername());
+                response.setAssigneeAvatar(u.getAvatar());
+            });
+        }
+        
+        return response;
     }
 
     public BoardResponse toBoardResponse(Board board, List<Card> cards) {

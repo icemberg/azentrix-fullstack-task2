@@ -5,15 +5,12 @@ import lombok.Data;
 
 @Data
 public class UserUpdateRequest {
-    
+
     @NotBlank(message = "Username is required")
     private String username;
-    
     private String avatar;
-    
     private String currentPassword;
     private String newPassword;
-
     private String theme;
     private String defaultView;
     private String startOfWeek;
@@ -22,4 +19,5 @@ public class UserUpdateRequest {
     private Boolean pushDueReminders;
     private Boolean pushBoardUpdates;
     private Boolean twoFactorEnabled;
+
 }

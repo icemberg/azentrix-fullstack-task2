@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MoreHorizontal, X, Shield, AlertTriangle, Briefcase, Mail } from 'lucide-react';
+import { MoreHorizontal, X, Shield, AlertTriangle, Briefcase, Mail, ShieldAlert } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import Topbar from '../components/layout/Topbar';
 import { getAllUsers, updateUserRole } from '../api/admin.api';
 import { useAuthStore } from '../store/auth.store';
@@ -54,6 +55,28 @@ const Admin = () => {
     }
     updateRoleMutation.mutate({ id: selectedUser.id, role: selectedUser.role });
   };
+
+  if (currentUserRole !== 'ADMIN') {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center bg-base p-6">
+        <div className="flex max-w-md flex-col items-center text-center">
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-accent-red/10 text-accent-red">
+            <ShieldAlert size={40} />
+          </div>
+          <h1 className="mb-2 font-display text-3xl font-bold text-primary">Access Denied</h1>
+          <p className="mb-8 font-sans text-[15px] text-secondary leading-relaxed">
+            You don't have permission to view the Admin panel. This area is restricted to System Administrators.
+          </p>
+          <Link 
+            to="/dashboard"
+            className="rounded-lg bg-accent-blue px-6 py-2.5 font-sans text-sm font-semibold text-white shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-accent-blue focus:ring-offset-2 transition-all"
+          >
+            Return to Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

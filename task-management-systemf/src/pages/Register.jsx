@@ -12,9 +12,17 @@ import api from '../api/axios';
 
 const Register = () => {
   const [formData, setFormData] = useState({ username: '', email: '', role: 'USER', password: '' });
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
   const location = useLocation();
   const addToast = useToastStore((state) => state.addToast);
+  const token = useAuthStore((state) => state.token);
+
+  React.useEffect(() => {
+    if (token) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [token, navigate]);
 
   const mutation = useMutation({
     mutationFn: registerApi,
@@ -22,8 +30,8 @@ const Register = () => {
       // Auto-login or redirect to login. Let's redirect to login for now if no token returned, 
       // or if token returned, set it. The current API returns just a message usually, but let's check.
       addToast({ type: 'success', message: 'Account created successfully!' });
-      const from = location.state?.from?.pathname;
-      navigate('/login', from ? { state: { from: { pathname: from } } } : {});
+      const from = location.state?.from;
+      navigate('/login', from ? { state: { from } } : {});
     },
     onError: (error) => {
       addToast({
@@ -35,6 +43,17 @@ const Register = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const newErrors = {};
+    if (!formData.username.trim()) newErrors.username = 'Username is required';
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.password) newErrors.password = 'Password is required';
+    else if (formData.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    setErrors({});
     mutation.mutate(formData);
   };
 
@@ -50,7 +69,7 @@ const Register = () => {
       } else {
         useAuthStore.getState().setAuth(data.token, { username: data.username, email: data.email, role: data.role, avatar: data.avatar });
         addToast({ type: 'success', message: 'Signed up with Google successfully!' });
-        const from = location.state?.from?.pathname || '/dashboard';
+        const from = location.state?.from || '/dashboard';
         navigate(from, { replace: true });
       }
     },
@@ -138,13 +157,13 @@ const Register = () => {
                 <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
                 <input
                   type="text"
-                  required
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full h-11 bg-elevated border border-subtle rounded-lg pl-10 pr-4 font-sans text-[14px] text-primary placeholder:text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue focus-pulse transition-all"
+                  className={`w-full h-11 bg-elevated border ${errors.username ? 'border-red-500' : 'border-subtle'} rounded-lg pl-10 pr-4 font-sans text-[14px] text-primary placeholder:text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue focus-pulse transition-all`}
                   placeholder="e.g. alex.dev"
                 />
               </div>
+              {errors.username && <p className="text-red-500 text-xs mt-1 font-sans">{errors.username}</p>}
             </motion.div>
 
             <motion.div custom={1.5} initial="hidden" animate="visible" variants={staggerVariants}>
@@ -155,10 +174,11 @@ const Register = () => {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full h-11 bg-elevated border border-subtle rounded-lg pl-10 pr-4 font-sans text-[14px] text-primary placeholder:text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue focus-pulse transition-all"
+                  className={`w-full h-11 bg-elevated border ${errors.email ? 'border-red-500' : 'border-subtle'} rounded-lg pl-10 pr-4 font-sans text-[14px] text-primary placeholder:text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue focus-pulse transition-all`}
                   placeholder="name@example.com"
                 />
               </div>
+              {errors.email && <p className="text-red-500 text-xs mt-1 font-sans">{errors.email}</p>}
             </motion.div>
 
             <motion.div custom={2} initial="hidden" animate="visible" variants={staggerVariants}>
@@ -166,7 +186,6 @@ const Register = () => {
               <div className="relative">
                 <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
                 <select
-                  required
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                   className="w-full h-11 bg-elevated border border-subtle rounded-lg pl-10 pr-4 font-sans text-[14px] text-primary focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue focus-pulse transition-all appearance-none"
@@ -188,13 +207,13 @@ const Register = () => {
                 <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
                 <input
                   type="password"
-                  required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full h-11 bg-elevated border border-subtle rounded-lg pl-10 pr-4 font-sans text-[14px] text-primary placeholder:text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue focus-pulse transition-all"
+                  className={`w-full h-11 bg-elevated border ${errors.password ? 'border-red-500' : 'border-subtle'} rounded-lg pl-10 pr-4 font-sans text-[14px] text-primary placeholder:text-muted focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue focus-pulse transition-all`}
                   placeholder="••••••••"
                 />
               </div>
+              {errors.password && <p className="text-red-500 text-xs mt-1 font-sans">{errors.password}</p>}
             </motion.div>
 
             <motion.div custom={4} initial="hidden" animate="visible" variants={staggerVariants} className="pt-4">
